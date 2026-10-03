@@ -1,25 +1,3 @@
-<<<<<<< HEAD
-# aquaguard
-
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-=======
-# AquaGuard-IoT
-IoT-Based Smart Water Quality Monitoring &amp; Community Mapping System for IoTrix 2.0
-
 # 💧 AquaGuard: IoT-Based Smart Water Quality Monitoring & Community Mapping System
 
 > **IoTrix 2.0 Semi-Final Submission**  
@@ -47,11 +25,19 @@ AquaGuard is a portable, low-cost IoT device designed to monitor critical water 
 
 ---
 
-## 🚀 How to Run the Simulation
-1. Open the [Wokwi Public Simulation Link](https://wokwi.com).
-2. Click **Start Simulation** (Green Play Button).
-3. Open the **Serial Monitor** to observe real-time telemetry output.
-4. Interact with potentiometers and temperature sensors to simulate varying water quality conditions.
+## 🚀 How to Run the Flutter App
+```bash
+flutter pub get
+flutter run
+```
+
+---
+
+## 🌐 How to Run the Web Build
+```bash
+flutter build web --release
+```
+Then open `build/web/index.html` in your browser, or deploy to Vercel.
 
 ---
 
@@ -66,5 +52,4 @@ AquaGuard is a portable, low-cost IoT device designed to monitor critical water 
 
 ## 👥 Team
 * **Team Name:** [Your Team Name]
-* **Repository Link:** [https://github.com/YourUsername/AquaGuard-IoT](https://github.com/YourUsername/AquaGuard-IoT)
->>>>>>> 9e51a1b58b8d37fc5ffa99059e0a8857d65dad03
+* **Repository Link:** [https://github.com/ANafeesh/AquaGuard-IoT](https://github.com/ANafeesh/AquaGuard-IoT)
