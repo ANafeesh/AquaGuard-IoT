@@ -1,0 +1,100 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ---------------------------------------------------------
+    // Helper Functions
+    // ---------------------------------------------------------
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    // ---------------------------------------------------------
+    // Water Sources: sources/{sourceId}
+    // Authenticated users can read all sources.
+    // Users can create sources where createdBy equals their UID.
+    // Owners can edit/delete their sources; any auth user can update lastReadingAt.
+    // ---------------------------------------------------------
+    match /sources/{sourceId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() 
+                    && request.resource.data.createdBy == request.auth.uid
+                    && request.resource.data.type in ['river', 'lake', 'well', 'reservoir', 'stream', 'other'];
+      allow update: if isAuthenticated() && (
+        resource.data.createdBy == request.auth.uid || 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastReadingAt'])
+      );
+      allow delete: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
+    }
+
+    // ---------------------------------------------------------
+    // Measurements: measurements/{measurementId}
+    // Authenticated users can read all water quality measurements.
+    // Users can write/create only records where submittedBy equals their UID.
+    // ---------------------------------------------------------
+    match /measurements/{measurementId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+                    && request.resource.data.submittedBy == request.auth.uid
+                    && request.resource.data.source in ['device', 'community']
+                    && request.resource.data.ph is number
+                    && request.resource.data.tdsEc is number
+                    && request.resource.data.turbidity is number
+                    && request.resource.data.temperature is number;
+      allow update, delete: if isAuthenticated() && resource.data.submittedBy == request.auth.uid;
+    }
+
+    // ---------------------------------------------------------
+    // Devices: devices/{deviceId}
+    // Authenticated users can view registered hardware nodes.
+    // Device owners can register, update, and manage their devices.
+    // ---------------------------------------------------------
+    match /devices/{deviceId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if isAuthenticated() && (
+        resource.data.ownerUid == request.auth.uid ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastSeenAt'])
+      );
+      allow delete: if isAuthenticated() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // ---------------------------------------------------------
+    // Alerts: alerts/{alertId}
+    // Authenticated users can view anomaly alerts for monitored sources.
+    // Alerts can be created by authenticated sensors/users.
+    // Any authenticated user can acknowledge alerts.
+    // ---------------------------------------------------------
+    match /alerts/{alertId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && 
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['acknowledged']);
+      allow delete: if false; // Audit trail: alerts are not deleted
+    }
+
+    // =========================================================
+    // DEMO MODE COLLECTIONS (Prefix: demo_)
+    // Separates demo simulation datasets from production data.
+    // =========================================================
+    match /demo_sources/{sourceId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /demo_measurements/{measurementId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /demo_devices/{deviceId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /demo_alerts/{alertId} {
+      allow read, write: if isAuthenticated();
+    }
+  }
+}

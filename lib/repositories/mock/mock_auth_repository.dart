@@ -12,6 +12,13 @@ class MockAuthRepository implements AuthRepository {
 
   void _initFromStorage() {
     final storage = LocalStorageService.instance;
+    final isGuest = storage.getBool('auth_is_guest', defaultValue: false);
+    if (isGuest) {
+      _currentUser = AppUser.guest();
+      _authController.add(_currentUser);
+      return;
+    }
+
     final email = storage.getString('auth_email');
     final name = storage.getString('auth_name');
     final id = storage.getString('auth_id');
@@ -27,9 +34,10 @@ class MockAuthRepository implements AuthRepository {
             ? storage.getStringList('saved_sources').length
             : 5,
         daysActive: 28,
+        isGuest: false,
       );
     } else {
-      // Default initial mock user for first-time prototype exploration
+      // Default initial mock user for testing
       _currentUser = const AppUser(
         id: 'usr-mock-1',
         email: 'user@example.com',
@@ -38,6 +46,7 @@ class MockAuthRepository implements AuthRepository {
         observationsCount: 6,
         monitoredSourcesCount: 5,
         daysActive: 28,
+        isGuest: false,
       );
     }
     _authController.add(_currentUser);
@@ -52,6 +61,12 @@ class MockAuthRepository implements AuthRepository {
   @override
   AppUser? getCurrentUser() => _currentUser;
 
+  /// Test helper to immediately set user
+  void setCurrentUser(AppUser? user) {
+    _currentUser = user;
+    _authController.add(user);
+  }
+
   @override
   Future<AppUser> signIn(String email, String password) async {
     final storage = LocalStorageService.instance;
@@ -64,8 +79,10 @@ class MockAuthRepository implements AuthRepository {
       observationsCount: 6,
       monitoredSourcesCount: 5,
       daysActive: 28,
+      isGuest: false,
     );
 
+    await storage.setBool('auth_is_guest', false);
     await storage.setString('auth_id', _currentUser!.id);
     await storage.setString('auth_email', _currentUser!.email);
     await storage.setString('auth_name', _currentUser!.displayName);
@@ -86,12 +103,25 @@ class MockAuthRepository implements AuthRepository {
       observationsCount: 0,
       monitoredSourcesCount: 1,
       daysActive: 1,
+      isGuest: false,
     );
 
+    await storage.setBool('auth_is_guest', false);
     await storage.setString('auth_id', _currentUser!.id);
     await storage.setString('auth_email', _currentUser!.email);
     await storage.setString('auth_name', _currentUser!.displayName);
 
+    _authController.add(_currentUser);
+    return _currentUser!;
+  }
+
+  @override
+  Future<AppUser> continueAsGuest() async {
+    final storage = LocalStorageService.instance;
+    _currentUser = AppUser.guest();
+    await storage.setBool('auth_is_guest', true);
+    await storage.remove('auth_email');
+    await storage.remove('auth_id');
     _authController.add(_currentUser);
     return _currentUser!;
   }
@@ -102,6 +132,7 @@ class MockAuthRepository implements AuthRepository {
     await storage.remove('auth_id');
     await storage.remove('auth_email');
     await storage.remove('auth_name');
+    await storage.remove('auth_is_guest');
 
     _currentUser = null;
     _authController.add(null);

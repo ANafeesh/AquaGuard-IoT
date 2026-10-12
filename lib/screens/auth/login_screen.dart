@@ -64,6 +64,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _handleGuestLogin() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final authRepo = ref.read(authRepositoryProvider);
+      await authRepo.continueAsGuest();
+
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (context, a1, a2) => const MainNavigationScreen(),
+          transitionsBuilder: (context, a1, a2, child) =>
+              FadeTransition(opacity: a1, child: child),
+          transitionDuration: const Duration(milliseconds: 350),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Guest session initialization failed.';
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -254,12 +282,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   // Login Button
                   PrimaryButton(
+                    key: const Key('login_button'),
                     text: 'Sign In',
                     icon: Icons.login_rounded,
                     isLoading: _isLoading,
                     onPressed: _handleLogin,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 14),
+
+                  // Continue as Guest Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: OutlinedButton.icon(
+                      key: const Key('continue_as_guest_button'),
+                      icon: const Icon(Icons.person_outline_rounded, size: 20),
+                      label: const Text(
+                        'Continue as Guest',
+                        style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primaryDeepOcean,
+                        side: const BorderSide(color: AppColors.primaryAqua, width: 1.3),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: _handleGuestLogin,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
 
                   // Sign Up Link
                   Row(

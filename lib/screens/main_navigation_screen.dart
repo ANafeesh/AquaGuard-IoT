@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import '../widgets/custom_bottom_nav.dart';
 import 'home_dashboard_screen.dart';
 import 'map_screen.dart';
-import 'history_screen.dart';
+import 'alerts_screen.dart';
 import 'community_screen.dart';
-import 'profile_screen.dart';
+import 'settings_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final int initialIndex;
@@ -46,9 +46,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         onToggleOffline: _toggleOffline,
       ),
       const MapScreen(),
-      const HistoryScreen(),
+      const AlertsScreen(),
       const CommunityScreen(),
-      ProfileScreen(
+      SettingsScreen(
         isOffline: _isOfflineSimulated,
         onToggleOffline: _toggleOffline,
       ),

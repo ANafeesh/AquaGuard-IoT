@@ -5,11 +5,13 @@ import '../repositories/reading_repository.dart';
 import '../repositories/alert_repository.dart';
 import '../repositories/report_repository.dart';
 import '../repositories/auth_repository.dart';
+import '../repositories/device_repository.dart';
 import '../repositories/mock/mock_water_source_repository.dart';
 import '../repositories/mock/mock_reading_repository.dart';
 import '../repositories/mock/mock_alert_repository.dart';
 import '../repositories/mock/mock_report_repository.dart';
 import '../repositories/mock/mock_auth_repository.dart';
+import '../repositories/mock/mock_device_repository.dart';
 import '../repositories/firebase/firebase_water_source_repository.dart';
 import '../repositories/firebase/firebase_reading_repository.dart';
 import '../repositories/firebase/firebase_alert_repository.dart';
@@ -54,4 +56,9 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
     return MockAuthRepository();
   }
   return FirebaseAuthRepository();
+});
+
+/// Provider for DeviceRepository
+final deviceRepositoryProvider = Provider<DeviceRepository>((ref) {
+  return MockDeviceRepository();
 });

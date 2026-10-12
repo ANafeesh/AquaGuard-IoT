@@ -22,6 +22,11 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<AppUser> continueAsGuest() {
+    throw UnimplementedError('Firebase backend configuration required in Phase B.');
+  }
+
+  @override
   Future<void> signOut() {
     throw UnimplementedError('Firebase backend configuration required in Phase B.');
   }

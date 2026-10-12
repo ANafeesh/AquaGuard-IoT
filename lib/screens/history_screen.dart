@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../constants/app_colors.dart';
-import '../constants/app_typography.dart';
-import '../constants/parameter_thresholds.dart';
+import '../core/constants/app_colors.dart';
+import '../core/constants/app_typography.dart';
+import '../core/config/parameter_thresholds.dart';
+import '../core/widgets/disclaimer_banner.dart';
 import '../models/water_source.dart';
 import '../models/measurement.dart';
-import '../models/reading_log_entry.dart';
 import '../providers/app_state_providers.dart';
 import '../providers/repository_providers.dart';
-import '../widgets/custom_chart.dart';
-import '../widgets/status_badge.dart';
+import '../features/history/widgets/fl_parameter_chart.dart';
 
 class HistoryScreen extends ConsumerStatefulWidget {
   final WaterSource? initialSource;
@@ -23,6 +22,8 @@ class HistoryScreen extends ConsumerStatefulWidget {
 class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   WaterSource? _localSelectedSource;
   ParameterType _selectedParam = ParameterType.ph;
+  String _selectedRange = '24h'; // '24h', '7d', '30d', 'All'
+
   Map<String, List<HistoricalPoint>> _chartData = const {};
   Map<String, dynamic> _comparison = const {
     'latest': '7.2',
@@ -82,12 +83,43 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     }
   }
 
+  Color get _paramColor {
+    switch (_selectedParam) {
+      case ParameterType.ph:
+        return AppColors.primaryAqua;
+      case ParameterType.tds:
+        return AppColors.teal;
+      case ParameterType.turbidity:
+        return const Color(0xFF0284C7);
+      case ParameterType.temperature:
+        return const Color(0xFFEA580C);
+    }
+  }
+
+  List<HistoricalPoint> _getActivePoints() {
+    final rangeKey = _selectedRange.toUpperCase();
+    if (_chartData.containsKey(rangeKey)) {
+      return _chartData[rangeKey] ?? [];
+    }
+    // Handle 'All' range or default
+    if (rangeKey == 'ALL') {
+      // Aggregate all points
+      final List<HistoricalPoint> all = [];
+      _chartData.forEach((_, list) => all.addAll(list));
+      return all;
+    }
+    return _chartData['24H'] ?? [];
+  }
+
   void _showSourcePicker(List<WaterSource> allSources, WaterSource currentSource) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
+      backgroundColor: isDark ? AppColors.darkCardBackground : Colors.white,
       builder: (context) {
         return SafeArea(
           child: Padding(
@@ -96,14 +128,20 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Select Water Source', style: AppTypography.sectionHeading),
+                Text('Select Water Source', style: (isDark ? AppTypography.darkSectionHeading : AppTypography.sectionHeading)),
                 const SizedBox(height: 12),
                 ...allSources.map((source) {
                   final isSelected = source.id == currentSource.id;
                   return ListTile(
-                    title: Text(source.name, style: TextStyle(fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500)),
+                    title: Text(
+                      source.name,
+                      style: TextStyle(
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isDark ? AppColors.darkPrimaryText : AppColors.primaryText,
+                      ),
+                    ),
                     subtitle: Text(source.coordinates, style: AppTypography.muted),
-                    trailing: isSelected ? const Icon(Icons.check, color: AppColors.primaryAqua) : null,
+                    trailing: isSelected ? const Icon(Icons.check_circle_rounded, color: AppColors.primaryAqua) : null,
                     onTap: () {
                       setState(() {
                         _localSelectedSource = source;
@@ -124,413 +162,210 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final sourcesAsync = ref.watch(waterSourcesStreamProvider);
-    final activeGlobal = ref.watch(activeWaterSourceProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final allSources = ref.watch(waterSourcesStreamProvider).value ?? [];
+    final active = _localSelectedSource ?? (allSources.isNotEmpty ? allSources.first : null);
+    final activePoints = _getActivePoints();
 
     return Scaffold(
-      backgroundColor: AppColors.mainBackground,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.mainBackground,
       appBar: AppBar(
-        title: const Text('Water Quality History'),
-        backgroundColor: Colors.white,
+        title: const Text('Historical Water Trends'),
+        backgroundColor: isDark ? AppColors.darkCardBackground : Colors.white,
         elevation: 0,
-        foregroundColor: AppColors.primaryText,
+        foregroundColor: isDark ? AppColors.darkPrimaryText : AppColors.primaryText,
       ),
       body: SafeArea(
-        child: sourcesAsync.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator(color: AppColors.primaryAqua),
-          ),
-          error: (e, _) => Center(child: Text('Error loading history: $e')),
-          data: (allSources) {
-            final currentSource = _localSelectedSource ?? activeGlobal ?? allSources.first;
-
-            return SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Water Source Dropdown Selector
-                  InkWell(
-                    onTap: () => _showSourcePicker(allSources, currentSource),
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.water_drop_rounded, color: AppColors.primaryAqua, size: 20),
-                              const SizedBox(width: 10),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Selected Source', style: AppTypography.muted.copyWith(fontSize: 10.5)),
-                                  Text(
-                                    currentSource.name,
-                                    style: AppTypography.cardTitle.copyWith(fontSize: 15),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.secondaryText),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Parameter Selector Tabs
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _paramTab(ParameterType.ph, ParameterThresholds.phShortLabel),
-                        _paramTab(ParameterType.tds, ParameterThresholds.tdsShortLabel),
-                        _paramTab(ParameterType.turbidity, ParameterThresholds.turbidityShortLabel),
-                        _paramTab(ParameterType.temperature, ParameterThresholds.tempShortLabel),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Large Interactive Trend Chart
-                  if (_chartData.isNotEmpty)
-                    CustomChartCard(
-                      key: ValueKey('${currentSource.id}_${_selectedParam.name}'),
-                      title: '$_paramName Trend',
-                      subtitle: 'Historical readings aligned with baseline thresholds',
-                      dataByRange: _chartData,
-                      unit: _paramUnit,
-                    ),
-                  const SizedBox(height: 16),
-
-                  // Latest vs Previous vs Change Comparison Card
-                  Container(
-                    padding: const EdgeInsets.all(18),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Source Selector Bar
+              if (active != null)
+                InkWell(
+                  onTap: () => _showSourcePicker(allSources, active),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: AppColors.border),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.02),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
+                      color: isDark ? AppColors.darkCardBackground : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Icon(Icons.location_on_rounded, color: AppColors.primaryAqua, size: 20),
+                            const SizedBox(width: 8),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  active.name,
+                                  style: (isDark ? AppTypography.darkCardTitle : AppTypography.cardTitle).copyWith(fontSize: 15),
+                                ),
+                                Text(
+                                  active.coordinates,
+                                  style: AppTypography.muted.copyWith(fontSize: 11),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        Row(
                           children: [
                             Text(
-                              'Reading Delta Comparison',
-                              style: AppTypography.cardTitle.copyWith(fontSize: 14.5),
+                              'Switch',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primaryAqua,
+                              ),
                             ),
-                            StatusBadge(status: currentSource.status, isCompact: true),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            // Latest Reading
-                            _deltaItem(
-                              title: 'Latest Reading',
-                              value: '${_comparison['latest']} $_paramUnit',
-                              color: AppColors.primaryText,
-                            ),
-                            _verticalDivider(),
-                            // Previous Reading
-                            _deltaItem(
-                              title: 'Previous Reading',
-                              value: '${_comparison['previous']} $_paramUnit',
-                              color: AppColors.secondaryText,
-                            ),
-                            _verticalDivider(),
-                            // Change
-                            _deltaItem(
-                              title: 'Change',
-                              value: _comparison['change'] as String? ?? '+0.0',
-                              color: AppColors.primaryAqua,
-                              isBold: true,
-                            ),
+                            const Icon(Icons.arrow_drop_down_rounded, color: AppColors.primaryAqua),
                           ],
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                ),
+              const SizedBox(height: 14),
 
-                  // Recent Measurement Logs
-                  Text(
-                    'Recent Logged Readings',
-                    style: AppTypography.sectionHeading,
-                  ),
-                  const SizedBox(height: 12),
-
-                  ref.watch(readingLogsStreamProvider(currentSource.id)).when(
-                    loading: () => const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(24),
-                        child: CircularProgressIndicator(color: AppColors.primaryAqua),
-                      ),
-                    ),
-                    error: (e, _) => Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text('Unable to load logs: $e', style: AppTypography.muted),
-                    ),
-                    data: (logs) {
-                      if (logs.isEmpty) {
-                        return Container(
-                          padding: const EdgeInsets.all(24),
-                          alignment: Alignment.center,
-                          child: Text(
-                            'No logged readings recorded for this source.',
-                            style: AppTypography.muted,
-                          ),
-                        );
-                      }
-
-                      return Column(
-                        children: logs.map((log) => _buildLogRow(log, currentSource)).toList(),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _paramTab(ParameterType type, String title) {
-    final isSelected = _selectedParam == type;
-    return Padding(
-      padding: const EdgeInsets.only(right: 8.0),
-      child: ChoiceChip(
-        selected: isSelected,
-        label: Text(title),
-        labelStyle: TextStyle(
-          fontSize: 12.5,
-          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-          color: isSelected ? Colors.white : AppColors.primaryText,
-        ),
-        selectedColor: AppColors.primaryDeepOcean,
-        backgroundColor: Colors.white,
-        side: BorderSide(
-          color: isSelected ? AppColors.primaryDeepOcean : AppColors.border,
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        onSelected: (val) {
-          if (val) {
-            setState(() {
-              _selectedParam = type;
-            });
-            _loadData();
-          }
-        },
-      ),
-    );
-  }
-
-  Widget _deltaItem({
-    required String title,
-    required String value,
-    required Color color,
-    bool isBold = false,
-  }) {
-    return Column(
-      children: [
-        Text(title, style: AppTypography.muted.copyWith(fontSize: 11)),
-        const SizedBox(height: 3),
-        Text(
-          value,
-          style: AppTypography.measurementValue.copyWith(
-            fontSize: 18,
-            color: color,
-            fontWeight: isBold ? FontWeight.w800 : FontWeight.w700,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _verticalDivider() {
-    return Container(width: 1, height: 28, color: AppColors.border);
-  }
-
-  String _formatTimestamp(DateTime dt) {
-    final now = DateTime.now();
-    final diff = now.difference(dt);
-    if (diff.inMinutes < 60) {
-      return '${diff.inMinutes == 0 ? 1 : diff.inMinutes} mins ago';
-    } else if (diff.inHours < 24) {
-      return '${diff.inHours} hours ago';
-    } else if (diff.inDays < 7) {
-      return '${diff.inDays} days ago';
-    } else {
-      return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
-    }
-  }
-
-  Widget _buildLogRow(ReadingLogEntry log, WaterSource source) {
-    return InkWell(
-      onTap: () => _showReadingDetailSheet(log, source),
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+              // Parameter Selection Tabs
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
                   children: [
-                    const Icon(Icons.access_time_rounded, size: 13, color: AppColors.secondaryText),
-                    const SizedBox(width: 4),
-                    Text(
-                      _formatTimestamp(log.timestamp),
-                      style: AppTypography.secondary.copyWith(fontWeight: FontWeight.w600, fontSize: 12),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  'pH ${log.ph.toStringAsFixed(1)} • ${log.tds} ppm • ${log.turbidity.toStringAsFixed(1)} NTU • ${log.temperature.toStringAsFixed(1)}°C',
-                  style: AppTypography.muted.copyWith(fontSize: 11),
-                ),
-              ],
-            ),
-            Row(
-              children: [
-                StatusBadge(status: log.status, isCompact: true),
-                const SizedBox(width: 4),
-                const Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.mutedText),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showReadingDetailSheet(ReadingLogEntry log, WaterSource source) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(22.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Reading Log Entry', style: AppTypography.sectionHeading),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${source.name} • ${source.coordinates}',
-                  style: AppTypography.cardTitle.copyWith(fontSize: 13.5),
-                ),
-                Text(
-                  'Recorded on ${log.timestamp.toString().substring(0, 16)}',
-                  style: AppTypography.muted.copyWith(fontSize: 11.5),
-                ),
-                const SizedBox(height: 16),
-
-                // Telemetry parameters grid
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppColors.mainBackground,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _readingParam('pH', log.ph.toStringAsFixed(1), 'pH', ParameterThresholds.isPhTypical(log.ph)),
-                          _readingParam('TDS', '${log.tds}', 'ppm', ParameterThresholds.isTdsTypical(log.tds.toDouble())),
-                          _readingParam('Turbidity', log.turbidity.toStringAsFixed(1), 'NTU', ParameterThresholds.isTurbidityTypical(log.turbidity)),
-                          _readingParam('Temp', log.temperature.toStringAsFixed(1), '°C', ParameterThresholds.isTempTypical(log.temperature)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // Notes & Status row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '"${log.notes}"',
-                        style: AppTypography.body.copyWith(fontStyle: FontStyle.italic, fontSize: 12.5),
-                      ),
-                    ),
+                    _buildParamTab(ParameterType.ph, 'pH Level', isDark),
                     const SizedBox(width: 8),
-                    StatusBadge(status: log.status),
+                    _buildParamTab(ParameterType.tds, 'TDS / EC', isDark),
+                    const SizedBox(width: 8),
+                    _buildParamTab(ParameterType.turbidity, 'Turbidity', isDark),
+                    const SizedBox(width: 8),
+                    _buildParamTab(ParameterType.temperature, 'Temperature', isDark),
                   ],
                 ),
-                const SizedBox(height: 12),
-              ],
-            ),
+              ),
+              const SizedBox(height: 16),
+
+              // fl_chart Line Chart with Tooltips & "No data for this range" empty handling
+              FlParameterChart(
+                title: '$_paramName Time Series',
+                parameterName: _paramName,
+                unit: _paramUnit,
+                points: activePoints,
+                selectedRange: _selectedRange,
+                primaryColor: _paramColor,
+                onRangeChanged: (range) {
+                  setState(() {
+                    _selectedRange = range;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // Reading Delta Comparison Summary
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkCardBackground : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Baseline Delta Analysis',
+                      style: (isDark ? AppTypography.darkCardTitle : AppTypography.cardTitle).copyWith(fontSize: 14),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildDeltaItem('Latest Reading', '${_comparison['latest']} $_paramUnit', isDark),
+                        _divider(),
+                        _buildDeltaItem('Previous Sample', '${_comparison['previous']} $_paramUnit', isDark),
+                        _divider(),
+                        _buildDeltaItem('Net Change', '${_comparison['change']} $_paramUnit', isDark, highlight: true),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Regulatory Notice
+              const DisclaimerBanner(),
+              const SizedBox(height: 24),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
-  Widget _readingParam(String label, String value, String unit, bool isTypical) {
+  Widget _buildParamTab(ParameterType type, String label, bool isDark) {
+    final isSelected = _selectedParam == type;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedParam = type;
+        });
+        _loadData();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primaryDeepOcean
+              : (isDark ? AppColors.darkCardBackground : Colors.white),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.primaryDeepOcean
+                : (isDark ? AppColors.darkBorder : AppColors.border),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12.5,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected
+                ? Colors.white
+                : (isDark ? AppColors.darkPrimaryText : AppColors.primaryText),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDeltaItem(String label, String value, bool isDark, {bool highlight = false}) {
     return Column(
       children: [
         Text(label, style: AppTypography.muted.copyWith(fontSize: 10.5)),
-        const SizedBox(height: 2),
+        const SizedBox(height: 3),
         Text(
           value,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: isTypical ? AppColors.primaryText : AppColors.statusWarning,
+            color: highlight
+                ? AppColors.teal
+                : (isDark ? AppColors.darkPrimaryText : AppColors.primaryText),
           ),
         ),
-        Text(unit, style: AppTypography.muted.copyWith(fontSize: 9.5)),
       ],
     );
+  }
+
+  Widget _divider() {
+    return Container(width: 1, height: 24, color: AppColors.border);
   }
 }

@@ -30,7 +30,9 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-# /build/ - commented out so build/web is tracked for Vercel deployment
+# Flutter build artifacts - ignore temporary build files but keep build/web for Vercel
+/build/*
+!/build/web/
 /coverage/
 
 # Symbolication related

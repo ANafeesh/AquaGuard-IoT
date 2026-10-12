@@ -4,10 +4,12 @@ import '../models/measurement.dart';
 import '../models/alert_item.dart';
 import '../models/community_observation.dart';
 import '../models/reading_log_entry.dart';
+import '../models/device.dart';
 import '../repositories/auth_repository.dart';
 import 'repository_providers.dart';
+import 'user_preferences_provider.dart';
 
-/// Stream of all monitored water sources
+/// Stream of all monitored water sources (reacts to demo mode)
 final waterSourcesStreamProvider = StreamProvider<List<WaterSource>>((ref) {
   final repo = ref.watch(waterSourceRepositoryProvider);
   return repo.watchWaterSources();
@@ -32,10 +34,13 @@ final activeWaterSourceProvider = Provider<WaterSource?>((ref) {
   final selectedId = ref.watch(selectedSourceIdProvider);
 
   return sourcesAsync.when(
-    data: (sources) => sources.firstWhere(
-      (s) => s.id == selectedId,
-      orElse: () => sources.first,
-    ),
+    data: (sources) {
+      if (sources.isEmpty) return null;
+      return sources.firstWhere(
+        (s) => s.id == selectedId,
+        orElse: () => sources.first,
+      );
+    },
     loading: () => null,
     error: (err, stack) => null,
   );
@@ -48,16 +53,18 @@ final latestReadingsProvider =
   return repo.watchLatestReadings(sourceId);
 });
 
-/// Stream of alerts
+/// Stream of alerts (reacts to demo mode)
 final alertsStreamProvider = StreamProvider<List<AlertItem>>((ref) {
+  final prefs = ref.watch(userPreferencesProvider);
   final repo = ref.watch(alertRepositoryProvider);
-  return repo.watchAlerts();
+  return repo.watchAlerts(isDemo: prefs.isDemoMode);
 });
 
 /// Stream of unread alerts count
 final unreadAlertsCountProvider = StreamProvider<int>((ref) {
+  final prefs = ref.watch(userPreferencesProvider);
   final repo = ref.watch(alertRepositoryProvider);
-  return repo.watchUnreadCount();
+  return repo.watchUnreadCount(isDemo: prefs.isDemoMode);
 });
 
 /// Stream of community observations
@@ -77,4 +84,25 @@ final readingLogsStreamProvider =
     StreamProvider.family<List<ReadingLogEntry>, String>((ref, sourceId) {
   final repo = ref.watch(readingRepositoryProvider);
   return repo.watchReadingLogs(sourceId);
+});
+
+/// Stream of IoT sensor devices
+final devicesStreamProvider = StreamProvider<List<Device>>((ref) {
+  final prefs = ref.watch(userPreferencesProvider);
+  final repo = ref.watch(deviceRepositoryProvider);
+  return repo.watchDevices(isDemo: prefs.isDemoMode);
+});
+
+/// Count of community readings submitted this week
+final weeklyReadingsCountProvider = Provider<int>((ref) {
+  final observationsAsync = ref.watch(observationsStreamProvider);
+  return observationsAsync.when(
+    data: (obs) {
+      final now = DateTime.now();
+      final oneWeekAgo = now.subtract(const Duration(days: 7));
+      return obs.where((o) => o.timestamp.isAfter(oneWeekAgo)).length;
+    },
+    loading: () => 14,
+    error: (err, stack) => 0,
+  );
 });

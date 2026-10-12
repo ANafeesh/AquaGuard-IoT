@@ -98,13 +98,13 @@ class WaterSourceCard extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _metricItem('pH', source.ph.toStringAsFixed(1)),
+                  _metricItem('pH', source.ph?.toStringAsFixed(1) ?? '--'),
                   _divider(),
-                  _metricItem('TDS', '${source.tds} ppm'),
+                  _metricItem('TDS', source.tdsEc != null ? '${source.tds} ppm' : '--'),
                   _divider(),
-                  _metricItem('Turbidity', '${source.turbidity} NTU'),
+                  _metricItem('Turbidity', source.turbidity != null ? '${source.turbidity} NTU' : '--'),
                   _divider(),
-                  _metricItem('Temp', '${source.temperature}°C'),
+                  _metricItem('Temp', source.temperature != null ? '${source.temperature}°C' : '--'),
                 ],
               ),
             ),

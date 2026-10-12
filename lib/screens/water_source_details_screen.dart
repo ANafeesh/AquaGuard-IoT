@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
-import '../constants/app_typography.dart';
-import '../constants/parameter_thresholds.dart';
-import '../data/mock_data.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/constants/app_colors.dart';
+import '../core/constants/app_typography.dart';
+import '../core/config/parameter_thresholds.dart';
+import '../core/widgets/disclaimer_banner.dart';
 import '../models/water_source.dart';
 import '../widgets/status_badge.dart';
-import '../widgets/primary_button.dart';
-import '../widgets/custom_chart.dart';
 import 'history_screen.dart';
 import 'report_measurement_screen.dart';
 
-class WaterSourceDetailsScreen extends StatelessWidget {
+class WaterSourceDetailsScreen extends ConsumerWidget {
   final WaterSource waterSource;
 
   const WaterSourceDetailsScreen({
@@ -19,38 +18,30 @@ class WaterSourceDetailsScreen extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: AppColors.mainBackground,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.mainBackground,
       appBar: AppBar(
         title: Text(
           waterSource.name,
-          style: AppTypography.cardTitle.copyWith(
+          style: (isDark ? AppTypography.darkCardTitle : AppTypography.cardTitle).copyWith(
             fontSize: 18,
             fontWeight: FontWeight.w700,
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? AppColors.darkCardBackground : Colors.white,
         elevation: 0,
-        foregroundColor: AppColors.primaryText,
+        foregroundColor: isDark ? AppColors.darkPrimaryText : AppColors.primaryText,
         actions: [
           IconButton(
             icon: const Icon(Icons.share_outlined, size: 20),
+            tooltip: 'Share source info',
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Simulated: Share source profile URL'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.bookmark_border_rounded, size: 20),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Saved to your monitored water sources.'),
+                  content: Text('Source telemetry link copied.'),
                   duration: Duration(seconds: 2),
                 ),
               );
@@ -65,17 +56,21 @@ class WaterSourceDetailsScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header Card
+              // Regulatory Notice Banner
+              const DisclaimerBanner(),
+              const SizedBox(height: 14),
+
+              // Header Overview Card
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDark ? AppColors.darkCardBackground : Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.02),
+                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -91,7 +86,7 @@ class WaterSourceDetailsScreen extends StatelessWidget {
                         Row(
                           children: [
                             const Icon(
-                              Icons.sync_rounded,
+                              Icons.access_time_rounded,
                               size: 13,
                               color: AppColors.secondaryText,
                             ),
@@ -107,7 +102,7 @@ class WaterSourceDetailsScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     Text(
                       waterSource.name,
-                      style: AppTypography.largeTitle.copyWith(
+                      style: (isDark ? AppTypography.darkLargeTitle : AppTypography.largeTitle).copyWith(
                         fontSize: 22,
                         color: AppColors.primaryDeepOcean,
                       ),
@@ -122,22 +117,22 @@ class WaterSourceDetailsScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          waterSource.coordinates,
-                          style: AppTypography.secondary.copyWith(
-                            color: AppColors.secondaryText,
+                          '${waterSource.type.displayName} • ${waterSource.coordinates}',
+                          style: (isDark ? AppTypography.darkSecondary : AppTypography.secondary).copyWith(
                             fontSize: 12.5,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      waterSource.description,
-                      style: AppTypography.body.copyWith(
-                        fontSize: 13.5,
-                        color: AppColors.secondaryText,
+                    if (waterSource.description != null && waterSource.description!.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        waterSource.description!,
+                        style: (isDark ? AppTypography.darkBody : AppTypography.body).copyWith(
+                          fontSize: 13,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
@@ -145,23 +140,24 @@ class WaterSourceDetailsScreen extends StatelessWidget {
 
               // Current Measurements Header
               Text(
-                'Current Sensor Readings',
-                style: AppTypography.sectionHeading,
+                'Current Indicator Measurements',
+                style: (isDark ? AppTypography.darkSectionHeading : AppTypography.sectionHeading),
               ),
               const SizedBox(height: 12),
 
-              // 4 Detailed Metric Cards
+              // 4 Detailed Metric Cards with status indicators
               Row(
                 children: [
                   Expanded(
                     child: _metricCard(
                       icon: Icons.water_drop_rounded,
                       name: ParameterThresholds.phLabel,
-                      value: waterSource.ph.toStringAsFixed(1),
-                      unit: ParameterThresholds.phUnit,
+                      value: waterSource.ph?.toStringAsFixed(2) ?? '--',
+                      unit: 'Unitless',
                       normalRange: '${ParameterThresholds.phMin} - ${ParameterThresholds.phMax}',
                       status: waterSource.status,
                       color: AppColors.primaryAqua,
+                      isDark: isDark,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -174,6 +170,7 @@ class WaterSourceDetailsScreen extends StatelessWidget {
                       normalRange: '${ParameterThresholds.tdsMin.toInt()} - ${ParameterThresholds.tdsMax.toInt()} ${ParameterThresholds.tdsUnit}',
                       status: waterSource.status,
                       color: AppColors.teal,
+                      isDark: isDark,
                     ),
                   ),
                 ],
@@ -185,11 +182,12 @@ class WaterSourceDetailsScreen extends StatelessWidget {
                     child: _metricCard(
                       icon: Icons.remove_red_eye_outlined,
                       name: ParameterThresholds.turbidityLabel,
-                      value: waterSource.turbidity.toStringAsFixed(1),
+                      value: waterSource.turbidity?.toStringAsFixed(1) ?? '--',
                       unit: ParameterThresholds.turbidityUnit,
                       normalRange: '${ParameterThresholds.turbidityMin} - ${ParameterThresholds.turbidityMax} ${ParameterThresholds.turbidityUnit}',
                       status: waterSource.status,
                       color: const Color(0xFF0284C7),
+                      isDark: isDark,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -197,31 +195,15 @@ class WaterSourceDetailsScreen extends StatelessWidget {
                     child: _metricCard(
                       icon: Icons.thermostat_rounded,
                       name: ParameterThresholds.tempLabel,
-                      value: waterSource.temperature.toStringAsFixed(1),
+                      value: waterSource.temperature?.toStringAsFixed(1) ?? '--',
                       unit: ParameterThresholds.tempUnit,
                       normalRange: '${ParameterThresholds.tempMin.toInt()} - ${ParameterThresholds.tempMax.toInt()} ${ParameterThresholds.tempUnit}',
                       status: waterSource.status,
                       color: const Color(0xFFEA580C),
+                      isDark: isDark,
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 24),
-
-              // Measurement History Section
-              Text(
-                'Measurement History',
-                style: AppTypography.sectionHeading,
-              ),
-              const SizedBox(height: 12),
-
-              CustomChartCard(
-                title: 'pH Baseline History',
-                subtitle: 'Continuous trend over selected interval',
-                dataByRange: MockData.phTrends,
-                unit: '',
-                normalMin: ParameterThresholds.phMin,
-                normalMax: ParameterThresholds.phMax,
               ),
               const SizedBox(height: 24),
 
@@ -229,16 +211,20 @@ class WaterSourceDetailsScreen extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: SecondaryButton(
-                      text: 'View History',
-                      icon: Icons.show_chart_rounded,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.show_chart_rounded, size: 18),
+                      label: const Text('View History', style: TextStyle(fontWeight: FontWeight.w700)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primaryDeepOcean,
+                        side: const BorderSide(color: AppColors.primaryAqua, width: 1.3),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
                       onPressed: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => HistoryScreen(
-                              initialSource: waterSource,
-                            ),
+                            builder: (context) => HistoryScreen(initialSource: waterSource),
                           ),
                         );
                       },
@@ -246,16 +232,20 @@ class WaterSourceDetailsScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: PrimaryButton(
-                      text: 'Report Observation',
-                      icon: Icons.edit_note_rounded,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.add_location_alt_rounded, size: 18),
+                      label: const Text('Add Reading', style: TextStyle(fontWeight: FontWeight.w700)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryDeepOcean,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
                       onPressed: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => ReportMeasurementScreen(
-                              initialSourceName: waterSource.name,
-                            ),
+                            builder: (context) => ReportMeasurementScreen(preselectedSourceId: waterSource.id),
                           ),
                         );
                       },
@@ -279,13 +269,14 @@ class WaterSourceDetailsScreen extends StatelessWidget {
     required String normalRange,
     required WaterQualityStatus status,
     required Color color,
+    required bool isDark,
   }) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppColors.darkCardBackground : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -296,32 +287,27 @@ class WaterSourceDetailsScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
+                  color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, size: 18, color: color),
+                child: Icon(icon, color: color, size: 18),
               ),
-              Text(
-                status.shortLabel,
-                style: AppTypography.muted.copyWith(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: status == WaterQualityStatus.withinTypicalRange
-                      ? AppColors.statusNormal
-                      : (status == WaterQualityStatus.unusual
-                          ? AppColors.statusWarning
-                          : AppColors.secondaryText),
+              Container(
+                width: 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  color: status == WaterQualityStatus.unusual
+                      ? AppColors.statusWarning
+                      : AppColors.teal,
+                  shape: BoxShape.circle,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
             name,
-            style: AppTypography.muted.copyWith(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
+            style: AppTypography.muted.copyWith(fontSize: 11, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 2),
           Row(
@@ -330,24 +316,26 @@ class WaterSourceDetailsScreen extends StatelessWidget {
             children: [
               Text(
                 value,
-                style: AppTypography.measurementValue.copyWith(fontSize: 22),
+                style: (isDark ? AppTypography.darkMeasurementValue : AppTypography.measurementValue).copyWith(
+                  fontSize: 22,
+                ),
               ),
-              if (unit.isNotEmpty) ...[
+              if (unit.isNotEmpty && unit != 'Unitless') ...[
                 const SizedBox(width: 4),
                 Text(
                   unit,
-                  style: AppTypography.muted.copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 11,
-                  ),
+                  style: AppTypography.muted.copyWith(fontSize: 10),
                 ),
               ],
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
-            'Ref: $normalRange',
-            style: AppTypography.muted.copyWith(fontSize: 10),
+            'Baseline: $normalRange',
+            style: TextStyle(
+              fontSize: 10,
+              color: isDark ? AppColors.darkMutedText : AppColors.mutedText,
+            ),
           ),
         ],
       ),

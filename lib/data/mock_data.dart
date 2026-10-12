@@ -5,84 +5,89 @@ import '../models/alert_item.dart';
 
 class MockData {
   static const String prototypeNotice = 
-      'UI/UX Prototype Mode: Realistic mock data used for demonstration. No physical IoT hardware or Firebase backend is connected.';
+      'Simulation Mode: Realistic mock data used for demonstration. No physical IoT hardware or Firebase backend is connected.';
 
   // Water Sources
   static List<WaterSource> waterSources = [
-    const WaterSource(
+    WaterSource(
       id: 'ws-1',
       name: 'Lake View Point',
-      coordinates: '6.9271° N, 79.8612° E (Mock GPS)',
-      locationArea: 'Central Reservoir District',
-      status: WaterQualityStatus.withinTypicalRange,
-      lastUpdated: 'Updated 2 min ago',
-      ph: 7.2,
-      tds: 320,
-      turbidity: 3.4,
-      temperature: 28.4,
-      description: 'Primary community freshwater lake monitored for ambient aquatic indicators.',
+      type: WaterSourceType.lake,
       latitude: 6.9271,
       longitude: 79.8612,
+      createdBy: 'system_admin',
+      createdAt: DateTime(2026, 1, 1),
+      lastReadingAt: DateTime.now().subtract(const Duration(minutes: 2)),
+      ph: 7.2,
+      tdsEc: 320.0,
+      turbidity: 3.4,
+      temperature: 28.4,
+      status: WaterQualityStatus.withinTypicalRange,
+      description: 'Primary community freshwater lake monitored for ambient aquatic indicators.',
     ),
-    const WaterSource(
+    WaterSource(
       id: 'ws-2',
       name: 'Riverside',
-      coordinates: '6.9380° N, 79.8720° E (Mock GPS)',
-      locationArea: 'East Riverbank Reach',
-      status: WaterQualityStatus.unusual,
-      lastUpdated: 'Updated 14 min ago',
-      ph: 6.9,
-      tds: 410,
-      turbidity: 6.8,
-      temperature: 29.1,
-      description: 'Slow-flowing river tributary downstream from seasonal runoff channels.',
+      type: WaterSourceType.river,
       latitude: 6.9380,
       longitude: 79.8720,
+      createdBy: 'system_admin',
+      createdAt: DateTime(2026, 1, 1),
+      lastReadingAt: DateTime.now().subtract(const Duration(minutes: 14)),
+      ph: 6.9,
+      tdsEc: 410.0,
+      turbidity: 6.8,
+      temperature: 29.1,
+      status: WaterQualityStatus.unusual,
+      description: 'Slow-flowing river tributary downstream from seasonal runoff channels.',
     ),
-    const WaterSource(
+    WaterSource(
       id: 'ws-3',
       name: 'Community Well',
-      coordinates: '6.9150° N, 79.8550° E (Mock GPS)',
-      locationArea: 'South Ward Community Center',
-      status: WaterQualityStatus.unusual,
-      lastUpdated: 'Updated 45 min ago',
-      ph: 6.4,
-      tds: 485,
-      turbidity: 8.2,
-      temperature: 27.8,
-      description: 'Shared groundwater well used for non-potable communal washing and garden supply.',
+      type: WaterSourceType.well,
       latitude: 6.9150,
       longitude: 79.8550,
+      createdBy: 'system_admin',
+      createdAt: DateTime(2026, 1, 1),
+      lastReadingAt: DateTime.now().subtract(const Duration(minutes: 45)),
+      ph: 6.4,
+      tdsEc: 485.0,
+      turbidity: 8.2,
+      temperature: 27.8,
+      status: WaterQualityStatus.unusual,
+      description: 'Shared groundwater well used for non-potable communal washing and garden supply.',
     ),
-    const WaterSource(
+    WaterSource(
       id: 'ws-4',
       name: 'North Reservoir',
-      coordinates: '6.9450° N, 79.8650° E (Mock GPS)',
-      locationArea: 'Highland Catchment',
-      status: WaterQualityStatus.withinTypicalRange,
-      lastUpdated: 'Updated 5 min ago',
-      ph: 7.4,
-      tds: 290,
-      turbidity: 2.8,
-      temperature: 26.9,
-      description: 'Elevated protected catchment basin supplying regional municipal distribution.',
+      type: WaterSourceType.reservoir,
       latitude: 6.9450,
       longitude: 79.8650,
+      createdBy: 'system_admin',
+      createdAt: DateTime(2026, 1, 1),
+      lastReadingAt: DateTime.now().subtract(const Duration(minutes: 5)),
+      ph: 7.4,
+      tdsEc: 290.0,
+      turbidity: 2.8,
+      temperature: 26.9,
+      status: WaterQualityStatus.withinTypicalRange,
+      description: 'Elevated protected catchment basin supplying regional municipal distribution.',
     ),
-    const WaterSource(
+    WaterSource(
       id: 'ws-5',
       name: 'Village Water Point',
-      coordinates: '6.9050° N, 79.8450° E (Mock GPS)',
-      locationArea: 'West Village Common',
-      status: WaterQualityStatus.noRecentData,
-      lastUpdated: 'Updated 3 hours ago',
-      ph: 7.1,
-      tds: 335,
-      turbidity: 3.1,
-      temperature: 28.0,
-      description: 'Public tap and spring outlet maintained by village elders and environmental group.',
+      type: WaterSourceType.other,
       latitude: 6.9050,
       longitude: 79.8450,
+      createdBy: 'system_admin',
+      createdAt: DateTime(2026, 1, 1),
+      lastReadingAt: DateTime.now().subtract(const Duration(hours: 3)),
+      ph: 7.1,
+      tdsEc: 335.0,
+      turbidity: 3.1,
+      temperature: 28.0,
+      status: WaterQualityStatus.noRecentData,
+      description: 'Public tap and spring outlet maintained by village environmental group.',
     ),
   ];
 
@@ -115,105 +120,106 @@ class MockData {
     ];
   }
 
-  // Trend historical points
-  static const Map<String, List<HistoricalPoint>> phTrends = {
+  // Historical data for charts (time series for Lake View Point)
+  static Map<String, List<HistoricalPoint>> historicalPh = {
     '24H': [
       HistoricalPoint('00:00', 7.1),
-      HistoricalPoint('04:00', 7.15),
+      HistoricalPoint('04:00', 7.0),
       HistoricalPoint('08:00', 7.3),
-      HistoricalPoint('12:00', 7.25),
+      HistoricalPoint('12:00', 7.4),
       HistoricalPoint('16:00', 7.2),
-      HistoricalPoint('20:00', 7.18),
-      HistoricalPoint('Now', 7.2),
+      HistoricalPoint('20:00', 7.2),
     ],
     '7D': [
       HistoricalPoint('Mon', 7.0),
-      HistoricalPoint('Tue', 7.1),
-      HistoricalPoint('Wed', 7.2),
-      HistoricalPoint('Thu', 7.15),
-      HistoricalPoint('Fri', 7.3),
+      HistoricalPoint('Tue', 7.2),
+      HistoricalPoint('Wed', 7.1),
+      HistoricalPoint('Thu', 7.3),
+      HistoricalPoint('Fri', 7.4),
       HistoricalPoint('Sat', 7.2),
       HistoricalPoint('Sun', 7.2),
     ],
     '30D': [
-      HistoricalPoint('W1', 7.05),
-      HistoricalPoint('W2', 7.18),
-      HistoricalPoint('W3', 7.22),
+      HistoricalPoint('W1', 7.0),
+      HistoricalPoint('W2', 7.2),
+      HistoricalPoint('W3', 7.1),
       HistoricalPoint('W4', 7.2),
+    ],
+    'All': [
+      HistoricalPoint('Jan', 7.1),
+      HistoricalPoint('Feb', 7.3),
+      HistoricalPoint('Mar', 7.2),
     ],
   };
 
-  static const Map<String, List<HistoricalPoint>> tdsTrends = {
+  static Map<String, List<HistoricalPoint>> historicalTds = {
     '24H': [
       HistoricalPoint('00:00', 310),
       HistoricalPoint('04:00', 315),
       HistoricalPoint('08:00', 325),
       HistoricalPoint('12:00', 330),
-      HistoricalPoint('16:00', 322),
-      HistoricalPoint('20:00', 318),
-      HistoricalPoint('Now', 320),
+      HistoricalPoint('16:00', 320),
+      HistoricalPoint('20:00', 320),
     ],
     '7D': [
       HistoricalPoint('Mon', 305),
-      HistoricalPoint('Tue', 312),
-      HistoricalPoint('Wed', 318),
-      HistoricalPoint('Thu', 325),
-      HistoricalPoint('Fri', 320),
-      HistoricalPoint('Sat', 319),
+      HistoricalPoint('Tue', 315),
+      HistoricalPoint('Wed', 320),
+      HistoricalPoint('Thu', 328),
+      HistoricalPoint('Fri', 322),
+      HistoricalPoint('Sat', 318),
       HistoricalPoint('Sun', 320),
     ],
     '30D': [
-      HistoricalPoint('W1', 298),
-      HistoricalPoint('W2', 310),
+      HistoricalPoint('W1', 310),
+      HistoricalPoint('W2', 325),
       HistoricalPoint('W3', 318),
       HistoricalPoint('W4', 320),
     ],
   };
 
-  static const Map<String, List<HistoricalPoint>> turbidityTrends = {
+  static Map<String, List<HistoricalPoint>> historicalTurbidity = {
     '24H': [
       HistoricalPoint('00:00', 3.1),
-      HistoricalPoint('04:00', 3.2),
+      HistoricalPoint('04:00', 3.0),
       HistoricalPoint('08:00', 3.6),
-      HistoricalPoint('12:00', 3.5),
-      HistoricalPoint('16:00', 3.3),
+      HistoricalPoint('12:00', 3.8),
+      HistoricalPoint('16:00', 3.5),
       HistoricalPoint('20:00', 3.4),
-      HistoricalPoint('Now', 3.4),
     ],
     '7D': [
-      HistoricalPoint('Mon', 2.9),
-      HistoricalPoint('Tue', 3.0),
-      HistoricalPoint('Wed', 3.4),
-      HistoricalPoint('Thu', 3.8),
-      HistoricalPoint('Fri', 3.5),
+      HistoricalPoint('Mon', 2.8),
+      HistoricalPoint('Tue', 3.1),
+      HistoricalPoint('Wed', 3.5),
+      HistoricalPoint('Thu', 4.0),
+      HistoricalPoint('Fri', 3.6),
       HistoricalPoint('Sat', 3.3),
       HistoricalPoint('Sun', 3.4),
     ],
     '30D': [
       HistoricalPoint('W1', 3.0),
-      HistoricalPoint('W2', 3.2),
-      HistoricalPoint('W3', 3.6),
+      HistoricalPoint('W2', 3.6),
+      HistoricalPoint('W3', 3.3),
       HistoricalPoint('W4', 3.4),
     ],
   };
 
-  static const Map<String, List<HistoricalPoint>> tempTrends = {
+  static Map<String, List<HistoricalPoint>> historicalTemperature = {
     '24H': [
       HistoricalPoint('00:00', 26.8),
       HistoricalPoint('04:00', 26.2),
       HistoricalPoint('08:00', 27.5),
-      HistoricalPoint('12:00', 29.2),
-      HistoricalPoint('16:00', 29.0),
-      HistoricalPoint('20:00', 28.1),
-      HistoricalPoint('Now', 28.4),
+      HistoricalPoint('12:00', 29.1),
+      HistoricalPoint('16:00', 28.8),
+      HistoricalPoint('20:00', 28.4),
     ],
     '7D': [
-      HistoricalPoint('Mon', 27.8),
-      HistoricalPoint('Tue', 28.1),
-      HistoricalPoint('Wed', 28.5),
-      HistoricalPoint('Thu', 28.2),
-      HistoricalPoint('Fri', 28.0),
-      HistoricalPoint('Sat', 28.6),
+      HistoricalPoint('Mon', 27.5),
+      HistoricalPoint('Tue', 28.0),
+      HistoricalPoint('Wed', 28.2),
+      HistoricalPoint('Thu', 28.6),
+      HistoricalPoint('Fri', 28.5),
+      HistoricalPoint('Sat', 28.1),
       HistoricalPoint('Sun', 28.4),
     ],
     '30D': [
@@ -224,53 +230,71 @@ class MockData {
     ],
   };
 
+  // Trend Aliases
+  static Map<String, List<HistoricalPoint>> get phTrends => historicalPh;
+  static Map<String, List<HistoricalPoint>> get tdsTrends => historicalTds;
+  static Map<String, List<HistoricalPoint>> get turbidityTrends => historicalTurbidity;
+  static Map<String, List<HistoricalPoint>> get tempTrends => historicalTemperature;
+
   // Recent Alerts
   static List<AlertItem> alerts = [
-    const AlertItem(
+    AlertItem(
       id: 'alt-1',
-      title: 'Unusual Reading Detected',
-      description: 'An unusual turbidity change was detected at River Side Point.',
-      timeAgo: '2 hours ago',
-      severity: WaterQualityStatus.unusual,
+      sourceId: 'ws-2',
+      measurementId: 'm-alt-1',
+      parameter: 'Turbidity',
+      value: 6.8,
+      message: 'Unusual water-quality measurement detected at this location.',
+      createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+      acknowledged: false,
       waterSourceName: 'Riverside',
-      isToday: true,
-      investigationAdvice: 'Unusual measurement detected. Further investigation may be required.',
-    ),
-    const AlertItem(
-      id: 'alt-2',
-      title: 'Elevated TDS Level Observation',
-      description: 'Community monitoring reported higher mineral readings at Community Well.',
-      timeAgo: '4 hours ago',
       severity: WaterQualityStatus.unusual,
+      investigationAdvice: 'Turbidity level shifted from typical baseline. Field re-check suggested.',
+    ),
+    AlertItem(
+      id: 'alt-2',
+      sourceId: 'ws-3',
+      measurementId: 'm-alt-2',
+      parameter: 'TDS/EC',
+      value: 485.0,
+      message: 'Unusual water-quality measurement detected at this location.',
+      createdAt: DateTime.now().subtract(const Duration(hours: 4)),
+      acknowledged: false,
       waterSourceName: 'Community Well',
-      isToday: true,
+      severity: WaterQualityStatus.unusual,
       investigationAdvice: 'Parameters shifted outside baseline. Re-check scheduled for this afternoon.',
     ),
-    const AlertItem(
+    AlertItem(
       id: 'alt-3',
-      title: 'New Community Observation',
-      description: 'A new observation was submitted for Community Well by member David K.',
-      timeAgo: 'Yesterday',
-      severity: WaterQualityStatus.withinTypicalRange,
+      sourceId: 'ws-3',
+      measurementId: 'm-alt-3',
+      parameter: 'pH Level',
+      value: 6.4,
+      message: 'Unusual water-quality measurement detected at this location.',
+      createdAt: DateTime.now().subtract(const Duration(days: 1)),
+      acknowledged: true,
       waterSourceName: 'Community Well',
-      isToday: false,
+      severity: WaterQualityStatus.unusual,
       investigationAdvice: 'Observation recorded to public community ledger.',
     ),
-    const AlertItem(
+    AlertItem(
       id: 'alt-4',
-      title: 'Telemetry Diagnostics Complete',
-      description: 'Scheduled simulated diagnostic ping completed for North Reservoir.',
-      timeAgo: '2 days ago',
-      severity: WaterQualityStatus.withinTypicalRange,
+      sourceId: 'ws-4',
+      measurementId: 'm-alt-4',
+      parameter: 'Temperature',
+      value: 26.9,
+      message: 'Unusual water-quality measurement detected at this location.',
+      createdAt: DateTime.now().subtract(const Duration(days: 2)),
+      acknowledged: true,
       waterSourceName: 'North Reservoir',
-      isToday: false,
+      severity: WaterQualityStatus.withinTypicalRange,
       investigationAdvice: 'Baseline indicators stable and aligned with historical seasonal averages.',
     ),
   ];
 
   // Community Observations
   static List<CommunityObservation> observations = [
-    const CommunityObservation(
+    CommunityObservation(
       id: 'obs-1',
       waterSourceName: 'Lake View Point',
       locationArea: 'Near North Jetty',
@@ -283,8 +307,9 @@ class MockData {
       status: WaterQualityStatus.withinTypicalRange,
       hasPhoto: true,
       helpfulCount: 8,
+      timestamp: DateTime.now().subtract(const Duration(hours: 2)),
     ),
-    const CommunityObservation(
+    CommunityObservation(
       id: 'obs-2',
       waterSourceName: 'Community Well',
       locationArea: 'South Ward Perimeter',
@@ -298,8 +323,9 @@ class MockData {
       status: WaterQualityStatus.unusual,
       hasPhoto: true,
       helpfulCount: 14,
+      timestamp: DateTime.now().subtract(const Duration(hours: 3)),
     ),
-    const CommunityObservation(
+    CommunityObservation(
       id: 'obs-3',
       waterSourceName: 'Riverside',
       locationArea: 'Bikeway Bridge Pier',
@@ -312,21 +338,23 @@ class MockData {
       status: WaterQualityStatus.unusual,
       hasPhoto: false,
       helpfulCount: 5,
+      timestamp: DateTime.now().subtract(const Duration(hours: 5)),
     ),
-    const CommunityObservation(
+    CommunityObservation(
       id: 'obs-4',
       waterSourceName: 'Village Water Point',
       locationArea: 'Common Square',
       userName: 'David Kalu',
       userAvatar: 'DK',
       timeAgo: 'Yesterday',
-      notes: 'Morning community draw sample tested clean. Consistent pressure and clarity.',
+      notes: 'Morning community draw sample tested within expected range. Consistent pressure and clarity.',
       ph: 7.1,
       tds: 335,
       turbidity: 3.1,
       status: WaterQualityStatus.withinTypicalRange,
       hasPhoto: false,
       helpfulCount: 9,
+      timestamp: DateTime.now().subtract(const Duration(days: 1)),
     ),
   ];
 }

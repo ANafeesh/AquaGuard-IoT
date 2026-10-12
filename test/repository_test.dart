@@ -43,8 +43,8 @@ void main() {
 
   group('Phase A: WaterQualityStatus Labels Tests', () {
     test('Strict status terminology adherence', () {
-      expect(WaterQualityStatus.withinTypicalRange.label, 'Within typical range');
-      expect(WaterQualityStatus.unusual.label, 'Unusual');
+      expect(WaterQualityStatus.withinTypicalRange.label, 'Within expected range');
+      expect(WaterQualityStatus.unusual.label, 'Unusual change detected');
       expect(WaterQualityStatus.noRecentData.label, 'No recent data');
 
       // Ensure no potable declarations
@@ -102,7 +102,7 @@ void main() {
       final repo = MockReportRepository();
       final initialCount = (await repo.watchObservations().first).length;
 
-      const newObs = CommunityObservation(
+      final newObs = CommunityObservation(
         id: 'obs-test',
         waterSourceName: 'Lake View Point',
         locationArea: 'Test Area',
@@ -111,6 +111,7 @@ void main() {
         timeAgo: 'Just now',
         notes: 'Testing observation submit',
         status: WaterQualityStatus.withinTypicalRange,
+        timestamp: DateTime.now(),
       );
 
       await repo.submitObservation(newObs);

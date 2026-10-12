@@ -6,6 +6,7 @@ class AppUser {
   final int observationsCount;
   final int monitoredSourcesCount;
   final int daysActive;
+  final bool isGuest;
 
   const AppUser({
     required this.id,
@@ -15,16 +16,31 @@ class AppUser {
     this.observationsCount = 0,
     this.monitoredSourcesCount = 0,
     this.daysActive = 1,
+    this.isGuest = false,
   });
 
   String get initials {
+    if (isGuest) return 'GT';
     final parts = displayName.trim().split(' ');
     if (parts.length >= 2) {
       return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     } else if (parts.isNotEmpty && parts[0].isNotEmpty) {
       return parts[0][0].toUpperCase();
     }
-    return 'AG';
+    return email.isNotEmpty ? email[0].toUpperCase() : 'AG';
+  }
+
+  factory AppUser.guest() {
+    return const AppUser(
+      id: 'guest_user_id',
+      email: 'guest@aquaguard.local',
+      displayName: 'Guest Observer',
+      role: 'Guest Observer',
+      isGuest: true,
+      observationsCount: 0,
+      monitoredSourcesCount: 0,
+      daysActive: 1,
+    );
   }
 }
 
@@ -40,6 +56,9 @@ abstract class AuthRepository {
 
   /// Register new user account
   Future<AppUser> signUp(String email, String password, {String? displayName});
+
+  /// Continue without account in read-only guest mode
+  Future<AppUser> continueAsGuest();
 
   /// Sign out current session
   Future<void> signOut();

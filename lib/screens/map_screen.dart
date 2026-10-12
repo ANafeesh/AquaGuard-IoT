@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../constants/app_colors.dart';
-import '../constants/app_typography.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import '../core/constants/app_colors.dart';
+import '../core/constants/app_typography.dart';
 import '../models/water_source.dart';
 import '../providers/app_state_providers.dart';
 import '../providers/saved_sources_provider.dart';
 import '../providers/user_preferences_provider.dart';
 import '../widgets/status_badge.dart';
-import '../widgets/primary_button.dart';
 import '../widgets/interactive_map_widget.dart';
 import 'water_source_details_screen.dart';
+import 'history_screen.dart';
+import 'report_measurement_screen.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
+  static bool defaultUseOpenStreetMap = true;
+
   const MapScreen({super.key});
 
   @override
@@ -20,8 +25,9 @@ class MapScreen extends ConsumerStatefulWidget {
 
 class _MapScreenState extends ConsumerState<MapScreen> {
   String _selectedFilter = 'All';
-  String _selectedRadius = 'All';
+  late bool _useOpenStreetMap = MapScreen.defaultUseOpenStreetMap;
   final TextEditingController _searchController = TextEditingController();
+  final MapController _mapController = MapController();
 
   @override
   void dispose() {
@@ -43,153 +49,182 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       if (_searchController.text.trim().isNotEmpty) {
         final query = _searchController.text.trim().toLowerCase();
         return source.name.toLowerCase().contains(query) ||
-            source.locationArea.toLowerCase().contains(query);
+            source.type.displayName.toLowerCase().contains(query);
       }
       return true;
     }).toList();
   }
 
-  void _showFilterOptionsSheet() {
-    final currentStyle = ref.read(userPreferencesProvider).mapStyle;
-    String tempStyle = currentStyle;
-    String tempFilter = _selectedFilter;
-    String tempRadius = _selectedRadius;
+  Color _getMarkerStatusColor(WaterQualityStatus status) {
+    switch (status) {
+      case WaterQualityStatus.withinTypicalRange:
+        return AppColors.teal;
+      case WaterQualityStatus.unusual:
+        return AppColors.statusWarning;
+      case WaterQualityStatus.noRecentData:
+        return AppColors.secondaryText;
+    }
+  }
+
+  void _showSourceBottomSheet(WaterSource source) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: isDark ? AppColors.darkCardBackground : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Drag handle
+                Center(
+                  child: Container(
+                    width: 38,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // Source Name, Type, and Status
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Map & Filter Options', style: AppTypography.sectionHeading),
-                        IconButton(
-                          icon: const Icon(Icons.close_rounded),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-
-                    // Map Style Layer Selector
-                    Text('Map Style Layer', style: AppTypography.cardTitle.copyWith(fontSize: 14)),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: ['Standard', 'Satellite', 'Terrain'].map((style) {
-                        final isSel = tempStyle == style;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: ChoiceChip(
-                            label: Text(style),
-                            selected: isSel,
-                            selectedColor: AppColors.primaryDeepOcean,
-                            labelStyle: TextStyle(
-                              fontSize: 12,
-                              fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
-                              color: isSel ? Colors.white : AppColors.primaryText,
-                            ),
-                            backgroundColor: Colors.white,
-                            side: BorderSide(
-                              color: isSel ? AppColors.primaryDeepOcean : AppColors.border,
-                            ),
-                            onSelected: (val) {
-                              if (val) setModalState(() => tempStyle = style);
-                            },
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryAqua.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  source.type.displayName,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primaryDeepOcean,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                source.lastUpdated,
+                                style: AppTypography.muted.copyWith(fontSize: 11),
+                              ),
+                            ],
                           ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 18),
-
-                    // Status Filter
-                    Text('Quality Status Filter', style: AppTypography.cardTitle.copyWith(fontSize: 14)),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: ['All', 'Typical', 'Unusual', 'No Data'].map((filter) {
-                        final isSel = tempFilter == filter;
-                        return ChoiceChip(
-                          label: Text(filter),
-                          selected: isSel,
-                          selectedColor: AppColors.primaryAqua,
-                          labelStyle: TextStyle(
-                            fontSize: 12,
-                            fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
-                            color: isSel ? Colors.white : AppColors.primaryText,
-                          ),
-                          backgroundColor: Colors.white,
-                          side: BorderSide(
-                            color: isSel ? AppColors.primaryAqua : AppColors.border,
-                          ),
-                          onSelected: (val) {
-                            if (val) setModalState(() => tempFilter = filter);
-                          },
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 18),
-
-                    // Search Radius
-                    Text('Monitoring Radius', style: AppTypography.cardTitle.copyWith(fontSize: 14)),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: ['All', '5 km', '10 km', '25 km'].map((radius) {
-                        final isSel = tempRadius == radius;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: ChoiceChip(
-                            label: Text(radius),
-                            selected: isSel,
-                            selectedColor: AppColors.teal,
-                            labelStyle: TextStyle(
-                              fontSize: 12,
-                              fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
-                              color: isSel ? Colors.white : AppColors.primaryText,
+                          const SizedBox(height: 4),
+                          Text(
+                            source.name,
+                            style: (isDark ? AppTypography.darkSectionHeading : AppTypography.sectionHeading).copyWith(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
                             ),
-                            backgroundColor: Colors.white,
-                            side: BorderSide(
-                              color: isSel ? AppColors.teal : AppColors.border,
-                            ),
-                            onSelected: (val) {
-                              if (val) setModalState(() => tempRadius = radius);
-                            },
                           ),
-                        );
-                      }).toList(),
+                          const SizedBox(height: 2),
+                          Text(
+                            'GPS: ${source.coordinates}',
+                            style: AppTypography.muted.copyWith(fontSize: 11),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 24),
-
-                    // Apply Button
-                    PrimaryButton(
-                      text: 'Apply Filters',
-                      icon: Icons.check_circle_outline_rounded,
-                      onPressed: () {
-                        ref.read(userPreferencesProvider.notifier).setMapStyle(tempStyle);
-                        setState(() {
-                          _selectedFilter = tempFilter;
-                          _selectedRadius = tempRadius;
-                        });
-                        Navigator.pop(context);
-                      },
-                    ),
-                    const SizedBox(height: 12),
+                    StatusBadge(status: source.status),
                   ],
                 ),
-              ),
-            );
-          },
+                const SizedBox(height: 16),
+
+                // Key Indicator Metrics
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkCardSubtleBg : const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _miniMetric('pH Level', source.ph?.toStringAsFixed(1) ?? '--', isDark),
+                      _metricSeparator(),
+                      _miniMetric('TDS / EC', '${source.tds} ppm', isDark),
+                      _metricSeparator(),
+                      _miniMetric('Turbidity', '${source.turbidity?.toStringAsFixed(1) ?? "--"} NTU', isDark),
+                      _metricSeparator(),
+                      _miniMetric('Temp', '${source.temperature?.toStringAsFixed(1) ?? "--"}°C', isDark),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                // Buttons: View history & View details
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.show_chart_rounded, size: 18),
+                        label: const Text('View history', style: TextStyle(fontWeight: FontWeight.w600)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primaryAqua,
+                          side: const BorderSide(color: AppColors.primaryAqua, width: 1.3),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => HistoryScreen(initialSource: source),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.analytics_outlined, size: 18),
+                        label: const Text('Source Details', style: TextStyle(fontWeight: FontWeight.w600)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryDeepOcean,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => WaterSourceDetailsScreen(waterSource: source),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
         );
       },
     );
@@ -197,109 +232,173 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final sourcesAsync = ref.watch(waterSourcesStreamProvider);
     final activeSource = ref.watch(activeWaterSourceProvider);
+    final savedSourceIds = ref.watch(savedSourceIdsProvider);
     final currentMapStyle = ref.watch(userPreferencesProvider).mapStyle;
-    final savedIds = ref.watch(savedSourceIdsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.mainBackground,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.mainBackground,
+      // FLOATING ACTION BUTTON: "Add community reading"
+      floatingActionButton: FloatingActionButton.extended(
+        key: const Key('add_community_reading_fab'),
+        heroTag: 'map_add_reading_fab',
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ReportMeasurementScreen(
+                preselectedSourceId: activeSource?.id,
+              ),
+            ),
+          );
+        },
+        backgroundColor: AppColors.primaryDeepOcean,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add_location_alt_rounded),
+        label: const Text(
+          'Add community reading',
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+        ),
+      ),
       body: SafeArea(
         child: sourcesAsync.when(
           loading: () => const Center(
             child: CircularProgressIndicator(color: AppColors.primaryAqua),
           ),
-          error: (err, _) => Center(
-            child: Text('Error loading map data: $err'),
-          ),
+          error: (err, _) => Center(child: Text('Error loading map: $err')),
           data: (allSources) {
-            final filtered = _applyFilter(allSources);
-            final selected = activeSource ?? allSources.first;
-            final isSaved = savedIds.contains(selected.id);
+            final visibleSources = _applyFilter(allSources);
+            final selected = activeSource ?? (allSources.isNotEmpty ? allSources.first : null);
+            final isSaved = selected != null && savedSourceIds.contains(selected.id);
 
             return Stack(
               children: [
-                // Interactive Map Widget
-                Positioned.fill(
-                  child: InteractiveMapWidget(
-                    waterSources: filtered,
-                    selectedSource: selected,
+                // Interactive Map Layer (OpenStreetMap Flutter Map or Vector Canvas)
+                if (_useOpenStreetMap && allSources.isNotEmpty)
+                  FlutterMap(
+                    mapController: _mapController,
+                    options: MapOptions(
+                      initialCenter: LatLng(
+                        selected?.latitude ?? 6.9271,
+                        selected?.longitude ?? 79.8612,
+                      ),
+                      initialZoom: 13.0,
+                      minZoom: 4.0,
+                      maxZoom: 18.0,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'io.aquaguard.app',
+                        errorTileCallback: (tile, error, stackTrace) {},
+                      ),
+                      MarkerLayer(
+                        markers: visibleSources.map((source) {
+                          final isCurrent = source.id == selected?.id;
+                          final markerColor = _getMarkerStatusColor(source.status);
+
+                          return Marker(
+                            point: LatLng(source.latitude, source.longitude),
+                            width: isCurrent ? 54 : 44,
+                            height: isCurrent ? 54 : 44,
+                            child: GestureDetector(
+                              onTap: () {
+                                ref.read(selectedSourceIdProvider.notifier).setSourceId(source.id);
+                                _showSourceBottomSheet(source);
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 250),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: markerColor,
+                                    width: isCurrent ? 3.5 : 2.5,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: markerColor.withValues(alpha: 0.35),
+                                      blurRadius: isCurrent ? 12 : 6,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: Center(
+                                  child: Icon(
+                                    Icons.water_drop_rounded,
+                                    color: markerColor,
+                                    size: isCurrent ? 24 : 18,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  )
+                else if (allSources.isNotEmpty)
+                  InteractiveMapWidget(
+                    waterSources: visibleSources,
+                    selectedSource: selected ?? allSources.first,
                     mapStyle: currentMapStyle,
                     onSourceSelected: (source) {
                       ref.read(selectedSourceIdProvider.notifier).setSourceId(source.id);
+                      _showSourceBottomSheet(source);
                     },
                   ),
-                ),
 
-                // Top Floating Search Bar and Filter Chips
+                // Top Floating Search & Filter Bar
                 Positioned(
-                  top: 12,
+                  top: 14,
                   left: 16,
                   right: 16,
                   child: Column(
                     children: [
-                      // Search Bar Card
                       Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: isDark ? AppColors.darkCardBackground : Colors.white,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.border),
+                          border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.08),
-                              blurRadius: 12,
+                              blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
                           ],
                         ),
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (_) => setState(() {}),
-                          decoration: InputDecoration(
-                            hintText: 'Search water sources...',
-                            hintStyle: AppTypography.secondary.copyWith(
-                              color: AppColors.mutedText,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.search_rounded, color: AppColors.secondaryText, size: 22),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: TextField(
+                                controller: _searchController,
+                                onChanged: (_) => setState(() {}),
+                                decoration: const InputDecoration(
+                                  hintText: 'Search river, well, reservoir...',
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(vertical: 14),
+                                ),
+                              ),
                             ),
-                            prefixIcon: const Icon(
-                              Icons.search_rounded,
-                              color: AppColors.primaryDeepOcean,
+                            IconButton(
+                              icon: Icon(
+                                _useOpenStreetMap ? Icons.layers_rounded : Icons.map_outlined,
+                                color: AppColors.primaryAqua,
+                              ),
+                              tooltip: 'Toggle Map Mode',
+                              onPressed: () {
+                                setState(() {
+                                  _useOpenStreetMap = !_useOpenStreetMap;
+                                });
+                              },
                             ),
-                            suffixIcon: _searchController.text.isNotEmpty
-                                ? Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(Icons.clear_rounded, size: 18),
-                                        onPressed: () {
-                                          _searchController.clear();
-                                          setState(() {});
-                                        },
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.tune_rounded, size: 18, color: AppColors.teal),
-                                        onPressed: _showFilterOptionsSheet,
-                                      ),
-                                    ],
-                                  )
-                                : InkWell(
-                                    onTap: _showFilterOptionsSheet,
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Container(
-                                      margin: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.altLightAquaBg,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: const Icon(
-                                        Icons.tune_rounded,
-                                        size: 18,
-                                        color: AppColors.teal,
-                                      ),
-                                    ),
-                                  ),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -323,16 +422,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                                 labelStyle: TextStyle(
                                   fontSize: 12,
                                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                  color: isSelected ? Colors.white : AppColors.primaryText,
+                                  color: isSelected ? Colors.white : (isDark ? AppColors.darkPrimaryText : AppColors.primaryText),
                                 ),
                                 selectedColor: chipColor,
-                                backgroundColor: Colors.white,
+                                backgroundColor: isDark ? AppColors.darkCardBackground : Colors.white,
                                 side: BorderSide(
-                                  color: isSelected ? chipColor : AppColors.border,
+                                  color: isSelected ? chipColor : (isDark ? AppColors.darkBorder : AppColors.border),
                                 ),
-                                elevation: 2,
-                                shadowColor: Colors.black.withValues(alpha: 0.1),
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                                 onSelected: (val) {
                                   setState(() {
                                     _selectedFilter = filter;
@@ -347,25 +443,43 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   ),
                 ),
 
-                // Draggable Bottom Sheet Card for Selected Location
+                // Recenter GPS Button
                 Positioned(
-                  bottom: 16,
-                  left: 16,
                   right: 16,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 250),
+                  bottom: 230,
+                  child: FloatingActionButton.small(
+                    heroTag: 'recenter_gps',
+                    backgroundColor: isDark ? AppColors.darkCardBackground : Colors.white,
+                    foregroundColor: AppColors.primaryDeepOcean,
+                    child: const Icon(Icons.my_location_rounded),
+                    onPressed: () {
+                      if (selected != null) {
+                        _mapController.move(
+                          LatLng(selected.latitude, selected.longitude),
+                          14.0,
+                        );
+                      }
+                    },
+                  ),
+                ),
+
+                // Selected Source Quick Preview Card at Bottom
+                if (selected != null)
+                  Positioned(
+                    bottom: 74, // Above Bottom Navigation / FAB room
+                    left: 16,
+                    right: 16,
                     child: Container(
-                      key: ValueKey(selected.id),
-                      padding: const EdgeInsets.all(18),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(color: AppColors.border, width: 1.2),
+                        color: isDark ? AppColors.darkCardBackground : Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border, width: 1.2),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 18,
-                            offset: const Offset(0, 6),
+                            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+                            blurRadius: 16,
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),
@@ -373,20 +487,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Drag handle bar
-                          Center(
-                            child: Container(
-                              width: 36,
-                              height: 4,
-                              margin: const EdgeInsets.only(bottom: 12),
-                              decoration: BoxDecoration(
-                                color: AppColors.border,
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                          ),
-
-                          // Location Header & Status Badge + Bookmark button
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -396,8 +496,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                                   children: [
                                     Text(
                                       selected.name,
-                                      style: AppTypography.sectionHeading.copyWith(
-                                        fontSize: 18,
+                                      style: (isDark ? AppTypography.darkSectionHeading : AppTypography.sectionHeading).copyWith(
+                                        fontSize: 17,
                                         fontWeight: FontWeight.w700,
                                       ),
                                       maxLines: 1,
@@ -405,7 +505,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      selected.coordinates,
+                                      '${selected.type.displayName} • ${selected.coordinates}',
                                       style: AppTypography.muted.copyWith(fontSize: 11),
                                     ),
                                   ],
@@ -414,65 +514,88 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                               Row(
                                 children: [
                                   IconButton(
-                                    tooltip: isSaved ? 'Remove Bookmark' : 'Bookmark Source',
                                     icon: Icon(
                                       isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
                                       color: isSaved ? AppColors.teal : AppColors.mutedText,
+                                      size: 20,
                                     ),
                                     onPressed: () {
                                       ref.read(savedSourceIdsProvider.notifier).toggleBookmark(selected.id);
                                     },
                                   ),
-                                  const SizedBox(width: 4),
-                                  StatusBadge(status: selected.status),
+                                  StatusBadge(status: selected.status, isCompact: true),
                                 ],
                               ),
                             ],
                           ),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 12),
 
-                          // Key Indicator Metrics
+                          // Mini metrics
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             decoration: BoxDecoration(
-                              color: AppColors.mainBackground,
-                              borderRadius: BorderRadius.circular(14),
+                              color: isDark ? AppColors.darkCardSubtleBg : AppColors.mainBackground,
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
-                                _miniMetric('pH', selected.ph.toStringAsFixed(1)),
+                                _miniMetric('pH', selected.ph?.toStringAsFixed(1) ?? '--', isDark),
                                 _metricSeparator(),
-                                _miniMetric('TDS', '${selected.tds} ppm'),
+                                _miniMetric('TDS', '${selected.tds} ppm', isDark),
                                 _metricSeparator(),
-                                _miniMetric('Turbidity', '${selected.turbidity} NTU'),
+                                _miniMetric('Turb', '${selected.turbidity?.toStringAsFixed(1) ?? "--"} NTU', isDark),
                                 _metricSeparator(),
-                                _miniMetric('Temp', '${selected.temperature}°C'),
+                                _miniMetric('Temp', '${selected.temperature?.toStringAsFixed(1) ?? "--"}°C', isDark),
                               ],
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
 
-                          // Action Button
-                          PrimaryButton(
-                            text: 'View Details',
-                            icon: Icons.analytics_outlined,
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => WaterSourceDetailsScreen(
-                                    waterSource: selected,
+                          // Action Buttons: View History & Details
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    foregroundColor: AppColors.primaryAqua,
+                                    side: const BorderSide(color: AppColors.primaryAqua),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                   ),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => HistoryScreen(initialSource: selected)),
+                                    );
+                                  },
+                                  child: const Text('View history', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                                 ),
-                              );
-                            },
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    backgroundColor: AppColors.primaryDeepOcean,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => WaterSourceDetailsScreen(waterSource: selected)),
+                                    );
+                                  },
+                                  child: const Text('Details', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
                   ),
-                ),
               ],
             );
           },
@@ -481,17 +604,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
-  Widget _miniMetric(String label, String value) {
+  Widget _miniMetric(String label, String value, bool isDark) {
     return Column(
       children: [
-        Text(label, style: AppTypography.muted.copyWith(fontSize: 10.5)),
-        const SizedBox(height: 2),
+        Text(label, style: AppTypography.muted.copyWith(fontSize: 10)),
+        const SizedBox(height: 1),
         Text(
           value,
-          style: AppTypography.secondary.copyWith(
+          style: (isDark ? AppTypography.darkSecondary : AppTypography.secondary).copyWith(
             fontWeight: FontWeight.w700,
-            fontSize: 12.5,
-            color: AppColors.primaryText,
+            fontSize: 12,
           ),
         ),
       ],
@@ -499,6 +621,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   Widget _metricSeparator() {
-    return Container(width: 1, height: 22, color: AppColors.border);
+    return Container(width: 1, height: 20, color: AppColors.border);
   }
 }
