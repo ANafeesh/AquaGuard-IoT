@@ -240,28 +240,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.mainBackground,
-      // FLOATING ACTION BUTTON: "Add community reading"
-      floatingActionButton: FloatingActionButton.extended(
-        key: const Key('add_community_reading_fab'),
-        heroTag: 'map_add_reading_fab',
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ReportMeasurementScreen(
-                preselectedSourceId: activeSource?.id,
-              ),
-            ),
-          );
-        },
-        backgroundColor: AppColors.primaryDeepOcean,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_location_alt_rounded),
-        label: const Text(
-          'Add community reading',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-        ),
-      ),
       body: SafeArea(
         child: sourcesAsync.when(
           loading: () => const Center(
@@ -446,7 +424,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 // Recenter GPS Button
                 Positioned(
                   right: 16,
-                  bottom: 230,
+                  bottom: selected != null ? 282 : 76,
                   child: FloatingActionButton.small(
                     heroTag: 'recenter_gps',
                     backgroundColor: isDark ? AppColors.darkCardBackground : Colors.white,
@@ -463,10 +441,38 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   ),
                 ),
 
+                // Floating Action Button: Add Reading (positioned cleanly above preview card)
+                Positioned(
+                  bottom: selected != null ? 222 : 16,
+                  right: 16,
+                  child: FloatingActionButton.extended(
+                    key: const Key('add_community_reading_fab'),
+                    heroTag: 'map_add_reading_fab',
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ReportMeasurementScreen(
+                            preselectedSourceId: activeSource?.id,
+                          ),
+                        ),
+                      );
+                    },
+                    backgroundColor: AppColors.primaryDeepOcean,
+                    foregroundColor: Colors.white,
+                    elevation: 4,
+                    icon: const Icon(Icons.add_location_alt_rounded, size: 18),
+                    label: const Text(
+                      'Add reading',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
+                    ),
+                  ),
+                ),
+
                 // Selected Source Quick Preview Card at Bottom
                 if (selected != null)
                   Positioned(
-                    bottom: 74, // Above Bottom Navigation / FAB room
+                    bottom: 12,
                     left: 16,
                     right: 16,
                     child: Container(

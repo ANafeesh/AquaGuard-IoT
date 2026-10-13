@@ -46,3 +46,21 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build/web
+
+      - name: Sync compiled build/web to main for Vercel
+        run: |
+          mkdir -p /tmp/vercel_build
+          cp -r build/web/* /tmp/vercel_build/
+          # Ensure root base href for Vercel
+          sed -i 's|<base href="/AquaGuard-IoT/">|<base href="/">|g' /tmp/vercel_build/index.html
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout main
+          rm -rf build/web/*
+          cp -r /tmp/vercel_build/* build/web/
+          git add build/web
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(deploy): sync compiled web build for Vercel [skip ci]"
+            git push origin main
+          fi

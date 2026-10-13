@@ -505,7 +505,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 85),
+                    const SizedBox(height: 105),
                   ],
                 ),
               ),

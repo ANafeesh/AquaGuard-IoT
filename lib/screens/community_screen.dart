@@ -217,7 +217,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                             borderRadius: BorderRadius.circular(20),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 180),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                               decoration: BoxDecoration(
                                 color: isSel
                                     ? AppColors.primaryDeepOcean
@@ -233,7 +233,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                               child: Text(
                                 type,
                                 style: TextStyle(
-                                  fontSize: 11.5,
+                                  fontSize: 12.5,
                                   fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
                                   color: isSel
                                       ? Colors.white
@@ -273,7 +273,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                     ...filtered.map((obs) => _buildReadingCard(context, obs, isDark)),
 
                   // Generous bottom spacing for FAB and Bottom Nav Bar
-                  const SizedBox(height: 90),
+                  const SizedBox(height: 105),
                 ],
               ),
             );
@@ -481,7 +481,9 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                   child: Text(
                     obs.notes,
                     style: (isDark ? AppTypography.darkObservationNote : AppTypography.observationNote).copyWith(
-                      fontSize: 12.5,
+                      fontSize: 13.5,
+                      height: 1.4,
+                      fontStyle: FontStyle.normal,
                       color: isDark ? AppColors.darkPrimaryText : const Color(0xFF1E293B),
                     ),
                   ),

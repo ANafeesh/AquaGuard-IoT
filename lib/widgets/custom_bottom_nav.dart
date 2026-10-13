@@ -19,67 +19,70 @@ class CustomBottomNav extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final unreadAlerts = ref.watch(unreadAlertsCountProvider).value ?? 0;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCardBackground : Colors.white,
-        border: Border(
-          top: BorderSide(
-            color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
-            width: 0.8,
+    return Material(
+      color: isDark ? AppColors.darkCardBackground : Colors.white,
+      elevation: 8,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
+              width: 0.8,
+            ),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
+          ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, -3),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 62,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(
-                index: 0,
-                icon: Icons.dashboard_outlined,
-                activeIcon: Icons.dashboard_rounded,
-                label: 'Dashboard',
-                isDark: isDark,
-              ),
-              _buildNavItem(
-                index: 1,
-                icon: Icons.map_outlined,
-                activeIcon: Icons.map_rounded,
-                label: 'Map',
-                isDark: isDark,
-              ),
-              _buildNavItem(
-                index: 2,
-                icon: Icons.notifications_none_rounded,
-                activeIcon: Icons.notifications_rounded,
-                label: 'Alerts',
-                badgeCount: unreadAlerts,
-                isDark: isDark,
-              ),
-              _buildNavItem(
-                index: 3,
-                icon: Icons.people_outline_rounded,
-                activeIcon: Icons.people_rounded,
-                label: 'Community',
-                isDark: isDark,
-              ),
-              _buildNavItem(
-                index: 4,
-                icon: Icons.settings_outlined,
-                activeIcon: Icons.settings_rounded,
-                label: 'Settings',
-                isDark: isDark,
-              ),
-            ],
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 60,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildNavItem(
+                  index: 0,
+                  icon: Icons.dashboard_outlined,
+                  activeIcon: Icons.dashboard_rounded,
+                  label: 'Dashboard',
+                  isDark: isDark,
+                ),
+                _buildNavItem(
+                  index: 1,
+                  icon: Icons.map_outlined,
+                  activeIcon: Icons.map_rounded,
+                  label: 'Map',
+                  isDark: isDark,
+                ),
+                _buildNavItem(
+                  index: 2,
+                  icon: Icons.notifications_none_rounded,
+                  activeIcon: Icons.notifications_rounded,
+                  label: 'Alerts',
+                  badgeCount: unreadAlerts,
+                  isDark: isDark,
+                ),
+                _buildNavItem(
+                  index: 3,
+                  icon: Icons.people_outline_rounded,
+                  activeIcon: Icons.people_rounded,
+                  label: 'Community',
+                  isDark: isDark,
+                ),
+                _buildNavItem(
+                  index: 4,
+                  icon: Icons.settings_outlined,
+                  activeIcon: Icons.settings_rounded,
+                  label: 'Settings',
+                  isDark: isDark,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -95,27 +98,35 @@ class CustomBottomNav extends ConsumerWidget {
     required bool isDark,
   }) {
     final isSelected = currentIndex == index;
-    final color = isSelected
-        ? (isDark ? AppColors.primaryAqua : AppColors.primaryDeepOcean)
-        : (isDark ? AppColors.darkMutedText : const Color(0xFF64748B));
+    final activeColor = isDark ? AppColors.primaryAqua : AppColors.primaryDeepOcean;
+    final inactiveColor = isDark ? AppColors.darkMutedText : const Color(0xFF64748B);
+    final color = isSelected ? activeColor : inactiveColor;
 
     return Expanded(
-      child: InkWell(
-        onTap: () => onTap(index),
-        borderRadius: BorderRadius.circular(16),
-        splashColor: AppColors.primaryAqua.withValues(alpha: 0.12),
-        highlightColor: Colors.transparent,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+      child: Semantics(
+        button: true,
+        label: label,
+        selected: isSelected,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapDown: (_) => onTap(index),
+            onTap: () => onTap(index),
+            child: Container(
+              color: Colors.transparent, // Ensures full hit-test coverage across whole slot
+              height: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.max,
+                children: [
               Stack(
                 clipBehavior: Clip.none,
                 alignment: Alignment.center,
                 children: [
                   AnimatedContainer(
-                    duration: const Duration(milliseconds: 220),
+                    duration: const Duration(milliseconds: 200),
                     curve: Curves.easeOutCubic,
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 3),
                     decoration: BoxDecoration(
@@ -134,8 +145,8 @@ class CustomBottomNav extends ConsumerWidget {
                   ),
                   if (badgeCount > 0)
                     Positioned(
-                      top: -3,
-                      right: 4,
+                      top: -2,
+                      right: 3,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 1),
                         decoration: BoxDecoration(
@@ -153,7 +164,7 @@ class CustomBottomNav extends ConsumerWidget {
                             ),
                           ],
                         ),
-                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                        constraints: const BoxConstraints(minWidth: 15, minHeight: 15),
                         child: Text(
                           badgeCount > 9 ? '9+' : '$badgeCount',
                           style: const TextStyle(
@@ -170,7 +181,7 @@ class CustomBottomNav extends ConsumerWidget {
               ),
               const SizedBox(height: 2),
               AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 200),
+                duration: const Duration(milliseconds: 180),
                 curve: Curves.easeInOut,
                 style: TextStyle(
                   fontSize: 10.5,
@@ -185,6 +196,8 @@ class CustomBottomNav extends ConsumerWidget {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }
