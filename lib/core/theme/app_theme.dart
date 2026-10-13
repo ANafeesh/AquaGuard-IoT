@@ -83,8 +83,19 @@ class AppTheme {
           borderSide: const BorderSide(color: AppColors.statusAttention),
         ),
       ),
+      pageTransitionsTheme: _pageTransitionsTheme,
     );
   }
+
+  static const PageTransitionsTheme _pageTransitionsTheme = PageTransitionsTheme(
+    builders: {
+      TargetPlatform.android: ZoomPageTransitionsBuilder(),
+      TargetPlatform.iOS: ZoomPageTransitionsBuilder(),
+      TargetPlatform.windows: ZoomPageTransitionsBuilder(),
+      TargetPlatform.macOS: ZoomPageTransitionsBuilder(),
+      TargetPlatform.linux: ZoomPageTransitionsBuilder(),
+    },
+  );
 
   static ThemeData get darkTheme {
     return ThemeData(
@@ -164,6 +175,7 @@ class AppTheme {
           borderSide: const BorderSide(color: AppColors.statusAttention),
         ),
       ),
+      pageTransitionsTheme: _pageTransitionsTheme,
     );
   }
 }

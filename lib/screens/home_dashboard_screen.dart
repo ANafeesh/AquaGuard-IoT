@@ -17,6 +17,7 @@ import 'water_source_details_screen.dart';
 import 'report_measurement_screen.dart';
 import 'history_screen.dart';
 import '../features/history/widgets/fl_parameter_chart.dart';
+import '../core/animations/animations.dart';
 
 class HomeDashboardScreen extends ConsumerStatefulWidget {
   final Function(int tabIndex)? onNavigateToTab;
@@ -140,144 +141,160 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                       ),
 
                     // Header Section
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  user != null ? 'Welcome, ${user.displayName}' : 'AquaGuard',
-                                  style: (isDark ? AppTypography.darkSecondary : AppTypography.secondary).copyWith(
-                                    fontSize: 13,
+                    FadeSlideEntrance(
+                      index: 0,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    user != null ? 'Welcome, ${user.displayName}' : 'AquaGuard',
+                                    style: (isDark ? AppTypography.darkSecondary : AppTypography.secondary).copyWith(
+                                      fontSize: 13,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'Water Quality Dashboard',
-                                  style: (isDark ? AppTypography.darkSectionHeading : AppTypography.sectionHeading).copyWith(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w700,
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Water Quality Dashboard',
+                                    style: (isDark ? AppTypography.darkSectionHeading : AppTypography.sectionHeading).copyWith(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          // Avatar
-                          GestureDetector(
-                            onTap: () => widget.onNavigateToTab?.call(4),
-                            child: CircleAvatar(
-                              radius: 20,
-                              backgroundColor: AppColors.primaryDeepOcean,
-                              child: Text(
-                                user?.initials ?? 'AG',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
+                            const SizedBox(width: 8),
+                            // Avatar
+                            GestureDetector(
+                              onTap: () => widget.onNavigateToTab?.call(4),
+                              child: CircleAvatar(
+                                radius: 20,
+                                backgroundColor: AppColors.primaryDeepOcean,
+                                child: Text(
+                                  user?.initials ?? 'AG',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
 
                     // Prominent Regulatory Non-potable Notice
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
-                      child: DisclaimerBanner(),
+                    const FadeSlideEntrance(
+                      index: 1,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20),
+                        child: DisclaimerBanner(),
+                      ),
                     ),
                     const SizedBox(height: 12),
 
                     // Quick Summary Metrics Row (Sources, Unread Alerts, Community Readings this week)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Row(
-                        children: [
-                          // Monitored Sources Card
-                          Expanded(
-                            child: _buildSummaryCard(
-                              title: 'Sources',
-                              value: allSources.length.toString(),
-                              subtitle: 'Monitored',
-                              icon: Icons.water_drop_rounded,
-                              color: AppColors.primaryAqua,
-                              isDark: isDark,
-                              onTap: () => widget.onNavigateToTab?.call(1),
+                    FadeSlideEntrance(
+                      index: 2,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Row(
+                          children: [
+                            // Monitored Sources Card
+                            Expanded(
+                              child: _buildSummaryCard(
+                                title: 'Sources',
+                                value: allSources.length.toString(),
+                                subtitle: 'Monitored',
+                                icon: Icons.water_drop_rounded,
+                                color: AppColors.primaryAqua,
+                                isDark: isDark,
+                                onTap: () => widget.onNavigateToTab?.call(1),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 10),
-                          // Unacknowledged Alerts Card
-                          Expanded(
-                            child: _buildSummaryCard(
-                              title: 'Alerts',
-                              value: unreadCount.toString(),
-                              subtitle: unreadCount == 0 ? 'No deviations' : 'Unacknowledged',
-                              icon: Icons.notification_important_rounded,
-                              color: unreadCount > 0 ? AppColors.statusWarning : AppColors.teal,
-                              isDark: isDark,
-                              onTap: () => widget.onNavigateToTab?.call(2),
+                            const SizedBox(width: 10),
+                            // Unacknowledged Alerts Card
+                            Expanded(
+                              child: _buildSummaryCard(
+                                title: 'Alerts',
+                                value: unreadCount.toString(),
+                                subtitle: unreadCount == 0 ? 'No deviations' : 'Unacknowledged',
+                                icon: Icons.notification_important_rounded,
+                                color: unreadCount > 0 ? AppColors.statusWarning : AppColors.teal,
+                                isDark: isDark,
+                                onTap: () => widget.onNavigateToTab?.call(2),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 10),
-                          // Community Readings this week Card
-                          Expanded(
-                            child: _buildSummaryCard(
-                              title: 'Community',
-                              value: weeklyReadingsCount.toString(),
-                              subtitle: 'This week',
-                              icon: Icons.people_alt_rounded,
-                              color: AppColors.primaryDeepOcean,
-                              isDark: isDark,
-                              onTap: () => widget.onNavigateToTab?.call(3),
+                            const SizedBox(width: 10),
+                            // Community Readings this week Card
+                            Expanded(
+                              child: _buildSummaryCard(
+                                title: 'Community',
+                                value: weeklyReadingsCount.toString(),
+                                subtitle: 'This week',
+                                icon: Icons.people_alt_rounded,
+                                color: AppColors.primaryDeepOcean,
+                                isDark: isDark,
+                                onTap: () => widget.onNavigateToTab?.call(3),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 20),
 
                     // SUMMARY CARDS FOR THE LATEST READING FROM EACH MONITORED SOURCE
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    FadeSlideEntrance(
+                      index: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Monitored Water Sources',
-                            style: (isDark ? AppTypography.darkSectionHeading : AppTypography.sectionHeading).copyWith(fontSize: 17),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Monitored Water Sources',
+                                  style: (isDark ? AppTypography.darkSectionHeading : AppTypography.sectionHeading).copyWith(fontSize: 17),
+                                ),
+                                Text(
+                                  '${allSources.length} Active',
+                                  style: AppTypography.muted.copyWith(fontSize: 12),
+                                ),
+                              ],
+                            ),
                           ),
-                          Text(
-                            '${allSources.length} Active',
-                            style: AppTypography.muted.copyWith(fontSize: 12),
+                          const SizedBox(height: 10),
+                          // Horizontal scrolling list of summary cards for EACH source
+                          SizedBox(
+                            height: 165,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              physics: const BouncingScrollPhysics(),
+                              itemCount: allSources.length,
+                              itemBuilder: (context, index) {
+                                final source = allSources[index];
+                                final isSelected = currentSource?.id == source.id;
+                                return _buildSourceSummaryCard(context, source, isSelected, isDark);
+                              },
+                            ),
                           ),
                         ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-
-                    // Horizontal scrolling list of summary cards for EACH source
-                    SizedBox(
-                      height: 165,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: allSources.length,
-                        itemBuilder: (context, index) {
-                          final source = allSources[index];
-                          final isSelected = currentSource?.id == source.id;
-                          return _buildSourceSummaryCard(context, source, isSelected, isDark);
-                        },
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -498,9 +515,8 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
     required bool isDark,
     required VoidCallback onTap,
   }) {
-    return InkWell(
+    return PressableScale(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         decoration: BoxDecoration(
@@ -560,12 +576,13 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
     bool isSelected,
     bool isDark,
   ) {
-    return GestureDetector(
+    return PressableScale(
       onTap: () {
         ref.read(selectedSourceIdProvider.notifier).setSourceId(source.id);
         _loadHistoricalTrends();
       },
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
         width: 230,
         margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         padding: const EdgeInsets.all(14),
@@ -580,8 +597,10 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-              blurRadius: 8,
+              color: isSelected
+                  ? AppColors.primaryAqua.withValues(alpha: isDark ? 0.35 : 0.18)
+                  : Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+              blurRadius: isSelected ? 12 : 8,
               offset: const Offset(0, 3),
             ),
           ],

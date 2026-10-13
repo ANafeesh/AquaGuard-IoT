@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_typography.dart';
+import '../core/animations/pressable_scale.dart';
 import '../models/measurement.dart';
 import 'status_badge.dart';
 
@@ -49,9 +50,8 @@ class MeasurementCard extends StatelessWidget {
     final iconColor = _getIconColor(reading.type);
     final iconBgColor = _getIconBgColor(reading.type);
 
-    return InkWell(
+    return PressableScale(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(

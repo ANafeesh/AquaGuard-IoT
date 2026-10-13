@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_typography.dart';
+import '../animations/pulse_indicator.dart';
 import '../../models/water_source.dart';
 
 class StatusBadge extends StatelessWidget {
@@ -20,6 +21,8 @@ class StatusBadge extends StatelessWidget {
     Color fg;
     Color dotColor;
     String text;
+    bool isPulsing = true;
+    Duration pulseDuration = const Duration(milliseconds: 2200);
 
     switch (status) {
       case WaterQualityStatus.withinTypicalRange:
@@ -27,18 +30,23 @@ class StatusBadge extends StatelessWidget {
         fg = isDark ? Colors.teal.shade200 : AppColors.statusNormal;
         dotColor = fg;
         text = isCompact ? 'Normal' : 'Within expected range';
+        isPulsing = true;
+        pulseDuration = const Duration(milliseconds: 2400);
         break;
       case WaterQualityStatus.unusual:
         bg = isDark ? AppColors.statusWarningDarkBg : AppColors.statusWarningBg;
         fg = isDark ? Colors.amber.shade300 : AppColors.statusWarning;
         dotColor = fg;
         text = isCompact ? 'Unusual' : 'Unusual change detected';
+        isPulsing = true;
+        pulseDuration = const Duration(milliseconds: 1300);
         break;
       case WaterQualityStatus.noRecentData:
         bg = isDark ? AppColors.statusNeutralDarkBg : AppColors.statusNeutralBg;
         fg = isDark ? AppColors.darkSecondaryText : AppColors.secondaryText;
         dotColor = isDark ? Colors.grey.shade400 : AppColors.mutedText;
         text = isCompact ? 'No data' : 'No recent data';
+        isPulsing = false;
         break;
     }
 
@@ -55,13 +63,12 @@ class StatusBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(
-              color: dotColor,
-              shape: BoxShape.circle,
-            ),
+          PulseIndicator(
+            color: dotColor,
+            size: isCompact ? 5.5 : 6.5,
+            haloScale: 2.2,
+            duration: pulseDuration,
+            isActive: isPulsing,
           ),
           const SizedBox(width: 5),
           Text(

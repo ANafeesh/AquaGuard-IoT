@@ -8,6 +8,7 @@ import '../models/water_source.dart';
 import '../widgets/status_badge.dart';
 import 'history_screen.dart';
 import 'report_measurement_screen.dart';
+import '../core/animations/animations.dart';
 
 class WaterSourceDetailsScreen extends ConsumerWidget {
   final WaterSource waterSource;
@@ -61,21 +62,41 @@ class WaterSourceDetailsScreen extends ConsumerWidget {
               const SizedBox(height: 14),
 
               // Header Overview Card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCardBackground : Colors.white,
+              FadeSlideEntrance(
+                index: 0,
+                child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: Opacity(
+                          opacity: 0.15,
+                          child: const WaterWaveWidget(
+                            height: 60,
+                            primaryColor: AppColors.primaryAqua,
+                            secondaryColor: AppColors.teal,
+                            amplitude: 8,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: (isDark ? AppColors.darkCardBackground : Colors.white).withValues(alpha: 0.92),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -136,7 +157,11 @@ class WaterSourceDetailsScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+      const SizedBox(height: 20),
 
               // Current Measurements Header
               Text(
@@ -271,7 +296,8 @@ class WaterSourceDetailsScreen extends ConsumerWidget {
     required Color color,
     required bool isDark,
   }) {
-    return Container(
+    return PressableScale(
+      child: Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkCardBackground : Colors.white,
@@ -292,15 +318,16 @@ class WaterSourceDetailsScreen extends ConsumerWidget {
                 ),
                 child: Icon(icon, color: color, size: 18),
               ),
-              Container(
-                width: 7,
-                height: 7,
-                decoration: BoxDecoration(
-                  color: status == WaterQualityStatus.unusual
-                      ? AppColors.statusWarning
-                      : AppColors.teal,
-                  shape: BoxShape.circle,
-                ),
+              PulseIndicator(
+                color: status == WaterQualityStatus.unusual
+                    ? AppColors.statusWarning
+                    : AppColors.teal,
+                size: 7,
+                haloScale: 2.2,
+                isActive: status != WaterQualityStatus.noRecentData,
+                duration: status == WaterQualityStatus.unusual
+                    ? const Duration(milliseconds: 1300)
+                    : const Duration(milliseconds: 2400),
               ),
             ],
           ),
@@ -339,6 +366,7 @@ class WaterSourceDetailsScreen extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

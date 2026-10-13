@@ -51,14 +51,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     await storage.setBool('hasCompletedOnboarding', true);
 
     if (!mounted) return;
-    final currentUser = ref.read(authRepositoryProvider).getCurrentUser();
-    final targetScreen = currentUser != null
-        ? const MainNavigationScreen()
-        : const LoginScreen();
 
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, a1, a2) => targetScreen,
+        pageBuilder: (context, a1, a2) => const LoginScreen(),
         transitionsBuilder: (context, a1, a2, child) =>
             FadeTransition(opacity: a1, child: child),
         transitionDuration: const Duration(milliseconds: 350),

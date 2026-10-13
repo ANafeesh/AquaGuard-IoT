@@ -37,17 +37,7 @@ class MockAuthRepository implements AuthRepository {
         isGuest: false,
       );
     } else {
-      // Default initial mock user for testing
-      _currentUser = const AppUser(
-        id: 'usr-mock-1',
-        email: 'user@example.com',
-        displayName: 'AquaGuard User',
-        role: 'Community Water Monitor',
-        observationsCount: 6,
-        monitoredSourcesCount: 5,
-        daysActive: 28,
-        isGuest: false,
-      );
+      _currentUser = null;
     }
     _authController.add(_currentUser);
   }

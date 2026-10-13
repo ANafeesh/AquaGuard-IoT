@@ -8,6 +8,7 @@ import '../providers/app_state_providers.dart';
 import '../providers/repository_providers.dart';
 import '../widgets/empty_state.dart';
 import 'history_screen.dart';
+import '../core/animations/animations.dart';
 
 class AlertsScreen extends ConsumerStatefulWidget {
   const AlertsScreen({super.key});
@@ -344,47 +345,63 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
                           : null,
                     ),
                   ] else ...[
-                    ...filteredAlerts.map((alert) {
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkCardBackground : Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: !alert.acknowledged
-                                ? AppColors.statusWarning.withValues(alpha: 0.5)
-                                : (isDark ? AppColors.darkBorder : AppColors.border),
-                            width: !alert.acknowledged ? 1.5 : 1.0,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
+                    ...filteredAlerts.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final alert = entry.value;
+                      return FadeSlideEntrance(
+                        index: index,
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: isDark ? AppColors.darkCardBackground : Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: !alert.acknowledged
+                                  ? AppColors.statusWarning.withValues(alpha: 0.5)
+                                  : (isDark ? AppColors.darkBorder : AppColors.border),
+                              width: !alert.acknowledged ? 1.5 : 1.0,
                             ),
-                          ],
-                        ),
-                        child: InkWell(
-                          onTap: () => _showDetailSheet(alert, sources),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: isDark ? AppColors.statusWarningDarkBg : AppColors.statusWarningBg,
-                                      shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: InkWell(
+                            onTap: () => _showDetailSheet(alert, sources),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        if (!alert.acknowledged)
+                                          const PulseIndicator(
+                                            color: AppColors.statusWarning,
+                                            size: 16,
+                                            haloScale: 2.3,
+                                            duration: Duration(milliseconds: 1400),
+                                          ),
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: isDark ? AppColors.statusWarningDarkBg : AppColors.statusWarningBg,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.warning_amber_rounded,
+                                            size: 18,
+                                            color: AppColors.statusWarning,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    child: const Icon(
-                                      Icons.warning_amber_rounded,
-                                      size: 18,
-                                      color: AppColors.statusWarning,
-                                    ),
-                                  ),
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Column(
@@ -500,8 +517,9 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
                             ],
                           ),
                         ),
-                      );
-                    }),
+                      ),
+                    );
+                  }),
                   ],
                 ],
               ),

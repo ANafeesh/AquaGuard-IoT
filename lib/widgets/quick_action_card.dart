@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_typography.dart';
+import '../core/animations/pressable_scale.dart';
 
 class QuickActionCard extends StatelessWidget {
   final IconData icon;
@@ -20,9 +21,8 @@ class QuickActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = customColor ?? AppColors.primaryDeepOcean;
 
-    return InkWell(
+    return PressableScale(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
         decoration: BoxDecoration(

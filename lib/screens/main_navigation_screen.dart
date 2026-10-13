@@ -17,16 +17,20 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   late int _currentIndex;
+  int _previousIndex = 0;
   bool _isOfflineSimulated = false;
 
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
+    _previousIndex = widget.initialIndex;
   }
 
   void _onTabChanged(int index) {
+    if (_currentIndex == index) return;
     setState(() {
+      _previousIndex = _currentIndex;
       _currentIndex = index;
     });
   }
@@ -54,10 +58,31 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       ),
     ];
 
+    final isForward = _currentIndex >= _previousIndex;
+
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: screens,
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 280),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          final inOffset = Tween<Offset>(
+            begin: Offset(isForward ? 0.05 : -0.05, 0.0),
+            end: Offset.zero,
+          ).animate(animation);
+
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: inOffset,
+              child: child,
+            ),
+          );
+        },
+        child: KeyedSubtree(
+          key: ValueKey<int>(_currentIndex),
+          child: screens[_currentIndex],
+        ),
       ),
       bottomNavigationBar: CustomBottomNav(
         currentIndex: _currentIndex,

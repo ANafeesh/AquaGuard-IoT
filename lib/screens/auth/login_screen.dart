@@ -7,6 +7,7 @@ import '../../widgets/primary_button.dart';
 import '../main_navigation_screen.dart';
 import 'sign_up_screen.dart';
 import 'forgot_password_screen.dart';
+import '../../core/animations/animations.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -108,25 +109,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // App Emblem & Branding
-                  Center(
-                    child: Container(
-                      width: 72,
-                      height: 72,
-                      decoration: BoxDecoration(
-                        gradient: AppColors.primaryGradient,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primaryDeepOcean.withValues(alpha: 0.25),
-                            blurRadius: 16,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.water_drop_rounded,
-                        color: Colors.white,
-                        size: 38,
+                  FadeSlideEntrance(
+                    index: 0,
+                    child: Center(
+                      child: Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          gradient: AppColors.primaryGradient,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primaryDeepOcean.withValues(alpha: 0.25),
+                              blurRadius: 16,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.water_drop_rounded,
+                          color: Colors.white,
+                          size: 38,
+                        ),
                       ),
                     ),
                   ),

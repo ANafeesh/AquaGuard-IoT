@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_typography.dart';
-import '../providers/repository_providers.dart';
 import '../services/local_storage_service.dart';
 import '../widgets/primary_button.dart';
 import 'auth/login_screen.dart';
-import 'main_navigation_screen.dart';
+import '../core/animations/animations.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -51,14 +50,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     await storage.setBool('hasCompletedOnboarding', true);
 
     if (!mounted) return;
-    final currentUser = ref.read(authRepositoryProvider).getCurrentUser();
-    final targetScreen = currentUser != null
-        ? const MainNavigationScreen()
-        : const LoginScreen();
 
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, a1, a2) => targetScreen,
+        pageBuilder: (context, a1, a2) => const LoginScreen(),
         transitionsBuilder: (context, a1, a2, child) =>
             FadeTransition(opacity: a1, child: child),
         transitionDuration: const Duration(milliseconds: 350),
@@ -120,18 +115,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Illustration Container
-                        Container(
-                          width: 220,
-                          height: 220,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.altLightAquaBg,
-                            border: Border.all(
-                              color: (page['color'] as Color).withValues(alpha: 0.2),
-                              width: 2,
+                        // Illustration Container with Animated Ripple Pulse
+                        RipplePulse(
+                          size: 240,
+                          color: (page['color'] as Color).withValues(alpha: 0.35),
+                          ringCount: 3,
+                          child: Container(
+                            width: 200,
+                            height: 200,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.altLightAquaBg,
+                              border: Border.all(
+                                color: (page['color'] as Color).withValues(alpha: 0.2),
+                                width: 2,
+                              ),
                             ),
-                          ),
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
@@ -178,7 +177,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 32),
+                      ),
+                      const SizedBox(height: 32),
 
                         // Badge
                         Container(
