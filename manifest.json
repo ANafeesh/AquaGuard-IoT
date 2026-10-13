@@ -1,11 +1,11 @@
 {
-    "name": "AquaGuard - Smart Water Monitoring",
-    "short_name": "AquaGuard",
+    "name": "aquaguard",
+    "short_name": "aquaguard",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0F4C81",
-    "theme_color": "#0F4C81",
-    "description": "Smart Water Quality & Community Monitoring",
+    "background_color": "#0175C2",
+    "theme_color": "#0175C2",
+    "description": "A new Flutter project.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
