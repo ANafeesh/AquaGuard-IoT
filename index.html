@@ -22,8 +22,8 @@
 
   <!-- Viewport and mobile scaling with notch / island coverage -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#0369a1" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#F8FAFC" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0F172A" media="(prefers-color-scheme: dark)">
 
   <!-- iOS meta tags & icons: black-translucent removes the white frosted bar in standalone PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -47,10 +47,15 @@
       padding: 0;
       width: 100%;
       height: 100%;
-      background-color: #0369a1;
+      background-color: #F8FAFC;
       overflow: hidden;
       -webkit-user-select: none;
       user-select: none;
+    }
+    @media (prefers-color-scheme: dark) {
+      html, body {
+        background-color: #0F172A;
+      }
     }
   </style>
 </head>
