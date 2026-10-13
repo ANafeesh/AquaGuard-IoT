@@ -29,7 +29,17 @@ jobs:
         run: flutter pub get
 
       - name: Build Flutter Web
-        run: flutter build web --release --base-href "/AquaGuard-IoT/"
+        run: |
+          flutter build web --release --base-href "/AquaGuard-IoT/" 2>&1 | tee build_output.log
+
+      - name: Report failure in summary
+        if: failure()
+        run: |
+          echo "### Flutter Build Failure Log" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -n 80 build_output.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          flutter analyze >> $GITHUB_STEP_SUMMARY 2>&1 || true
 
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
