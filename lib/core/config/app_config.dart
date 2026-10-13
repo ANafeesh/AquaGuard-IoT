@@ -4,8 +4,11 @@ class AppConfig {
   static const String appVersion = '1.0.0';
   static const String appBuild = '1';
 
-  /// Whether to use in-memory/mock repository implementations when Firebase is offline or unconfigured
-  static const bool useMockData = true;
+  /// Whether to force in-memory/mock repository implementations
+  static bool useMockData = false;
+
+  /// Whether Firebase was successfully initialized at application startup
+  static bool isFirebaseInitialized = false;
 
   /// Regulatory limitations and project purpose statement
   static const String limitationsStatement =

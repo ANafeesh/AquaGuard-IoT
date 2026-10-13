@@ -20,7 +20,7 @@ import '../repositories/firebase/firebase_auth_repository.dart';
 
 /// Provider for WaterSourceRepository
 final waterSourceRepositoryProvider = Provider<WaterSourceRepository>((ref) {
-  if (AppConfig.useMockData) {
+  if (AppConfig.useMockData || !AppConfig.isFirebaseInitialized) {
     return MockWaterSourceRepository();
   }
   return FirebaseWaterSourceRepository();
@@ -28,7 +28,7 @@ final waterSourceRepositoryProvider = Provider<WaterSourceRepository>((ref) {
 
 /// Provider for ReadingRepository
 final readingRepositoryProvider = Provider<ReadingRepository>((ref) {
-  if (AppConfig.useMockData) {
+  if (AppConfig.useMockData || !AppConfig.isFirebaseInitialized) {
     return MockReadingRepository();
   }
   return FirebaseReadingRepository();
@@ -36,7 +36,7 @@ final readingRepositoryProvider = Provider<ReadingRepository>((ref) {
 
 /// Provider for AlertRepository
 final alertRepositoryProvider = Provider<AlertRepository>((ref) {
-  if (AppConfig.useMockData) {
+  if (AppConfig.useMockData || !AppConfig.isFirebaseInitialized) {
     return MockAlertRepository();
   }
   return FirebaseAlertRepository();
@@ -44,7 +44,7 @@ final alertRepositoryProvider = Provider<AlertRepository>((ref) {
 
 /// Provider for ReportRepository
 final reportRepositoryProvider = Provider<ReportRepository>((ref) {
-  if (AppConfig.useMockData) {
+  if (AppConfig.useMockData || !AppConfig.isFirebaseInitialized) {
     return MockReportRepository();
   }
   return FirebaseReportRepository();
@@ -52,7 +52,7 @@ final reportRepositoryProvider = Provider<ReportRepository>((ref) {
 
 /// Provider for AuthRepository
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  if (AppConfig.useMockData) {
+  if (AppConfig.useMockData || !AppConfig.isFirebaseInitialized) {
     return MockAuthRepository();
   }
   return FirebaseAuthRepository();
