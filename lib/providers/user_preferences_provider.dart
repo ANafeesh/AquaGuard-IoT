@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/local_storage_service.dart';
 import '../core/services/demo_simulator_service.dart';
@@ -69,6 +70,7 @@ class UserPreferencesNotifier extends Notifier<UserPreferences> {
   UserPreferences build() {
     final storage = LocalStorageService.instance;
     final map = storage.getMap(_storageKey);
+    final systemIsDark = WidgetsBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
     if (map != null) {
       final isDemo = map['isDemoMode'] ?? false;
       if (isDemo) {
@@ -85,10 +87,10 @@ class UserPreferencesNotifier extends Notifier<UserPreferences> {
         turbidityUnit: map['turbidityUnit'] ?? 'NTU',
         mapStyle: map['mapStyle'] ?? 'Environmental Terrain',
         isDemoMode: isDemo,
-        isDarkMode: map['isDarkMode'] ?? false,
+        isDarkMode: map['isDarkMode'] ?? systemIsDark,
       );
     }
-    return const UserPreferences();
+    return UserPreferences(isDarkMode: systemIsDark);
   }
 
   Future<void> updatePreferences(UserPreferences newPrefs) async {

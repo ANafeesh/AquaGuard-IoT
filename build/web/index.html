@@ -60,14 +60,92 @@
   </style>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+  <div id="flutter_loading_splash" style="
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(180deg, #03224C 0%, #071B2F 60%, #021323 100%);
+    z-index: 999999;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: white;
+    overflow: hidden;
+    transition: opacity 0.4s ease-out;
+  ">
+    <!-- Fluid rising wave inside background -->
+    <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 100%; pointer-events: none; overflow: hidden;">
+      <div class="water-rise-fill"></div>
+    </div>
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
+    <!-- Center Droplet Logo -->
+    <div style="position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center;">
+      <div style="
+        width: 100px; height: 100px;
+        background: white;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.35), 0 0 24px rgba(14, 165, 233, 0.45);
+        animation: floatPulse 2.2s ease-in-out infinite alternate;
+      ">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="#0EA5E9">
+          <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+        </svg>
+      </div>
+      <h1 style="font-size: 32px; font-weight: 800; margin: 20px 0 6px; letter-spacing: -0.5px; text-shadow: 0 4px 12px rgba(0,0,0,0.35);">AquaGuard</h1>
+      <p style="font-size: 14px; opacity: 0.92; margin: 0; font-weight: 500; letter-spacing: 0.2px;">Smart Water Quality Monitoring</p>
+      
+      <!-- Liquid loading progress bar -->
+      <div style="width: 150px; height: 4px; background: rgba(255,255,255,0.18); border-radius: 10px; margin-top: 26px; overflow: hidden;">
+        <div class="water-loading-bar"></div>
+      </div>
+      <p style="font-size: 11px; opacity: 0.72; margin-top: 10px; letter-spacing: 0.5px;">Calibrating telemetry...</p>
+    </div>
+  </div>
+
+  <style>
+    @keyframes floatPulse {
+      0% { transform: translateY(0px) scale(1); }
+      100% { transform: translateY(-7px) scale(1.03); }
+    }
+    .water-loading-bar {
+      height: 100%;
+      width: 40%;
+      background: linear-gradient(90deg, #0EA5E9, #0D9488, #38BDF8);
+      border-radius: 10px;
+      animation: waterLoad 1.8s ease-in-out infinite;
+    }
+    @keyframes waterLoad {
+      0% { transform: translateX(-100%); }
+      50% { transform: translateX(120%); }
+      100% { transform: translateX(350%); }
+    }
+    .water-rise-fill {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(14, 165, 233, 0.28) 0%, rgba(3, 105, 161, 0.48) 100%);
+      animation: riseLiquid 2.0s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      transform-origin: bottom;
+    }
+    @keyframes riseLiquid {
+      0% { transform: scaleY(0); }
+      100% { transform: scaleY(1); }
+    }
+  </style>
+
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      var splash = document.getElementById('flutter_loading_splash');
+      if (splash) {
+        splash.style.opacity = '0';
+        setTimeout(function() { splash.remove(); }, 400);
+      }
+    });
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

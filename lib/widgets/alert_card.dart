@@ -16,25 +16,27 @@ class AlertCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     Color borderColor;
     Color iconColor;
     Color bgColor;
 
     switch (alert.severity) {
       case WaterQualityStatus.unusual:
-        borderColor = AppColors.statusWarning.withValues(alpha: 0.4);
+        borderColor = AppColors.statusWarning.withValues(alpha: isDark ? 0.6 : 0.4);
         iconColor = AppColors.statusWarning;
-        bgColor = AppColors.statusWarningBg.withValues(alpha: 0.4);
+        bgColor = isDark ? AppColors.statusWarningDarkBg : AppColors.statusWarningBg.withValues(alpha: 0.4);
         break;
       case WaterQualityStatus.noRecentData:
-        borderColor = AppColors.secondaryText.withValues(alpha: 0.35);
-        iconColor = AppColors.secondaryText;
-        bgColor = AppColors.mainBackground;
+        borderColor = isDark ? AppColors.darkBorder : AppColors.secondaryText.withValues(alpha: 0.35);
+        iconColor = isDark ? AppColors.darkSecondaryText : AppColors.secondaryText;
+        bgColor = isDark ? AppColors.darkCardBackground : AppColors.mainBackground;
         break;
       case WaterQualityStatus.withinTypicalRange:
-        borderColor = AppColors.border;
+        borderColor = isDark ? AppColors.darkBorder : AppColors.border;
         iconColor = AppColors.primaryAqua;
-        bgColor = AppColors.cardBackground;
+        bgColor = isDark ? AppColors.darkCardBackground : AppColors.cardBackground;
         break;
     }
 
@@ -46,7 +48,7 @@ class AlertCard extends StatelessWidget {
         border: Border.all(color: borderColor, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -61,7 +63,7 @@ class AlertCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.15),
+                  color: iconColor.withValues(alpha: isDark ? 0.22 : 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -77,15 +79,14 @@ class AlertCard extends StatelessWidget {
                   children: [
                     Text(
                       alert.title,
-                      style: AppTypography.cardTitle.copyWith(
+                      style: (isDark ? AppTypography.darkCardTitle : AppTypography.cardTitle).copyWith(
                         fontSize: 15.5,
-                        color: AppColors.primaryText,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       alert.timeAgo,
-                      style: AppTypography.muted,
+                      style: (isDark ? AppTypography.darkSecondary : AppTypography.muted).copyWith(fontSize: 11),
                     ),
                   ],
                 ),
@@ -95,9 +96,9 @@ class AlertCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             alert.description,
-            style: AppTypography.body.copyWith(
+            style: (isDark ? AppTypography.darkSecondary : AppTypography.body).copyWith(
               fontSize: 13.5,
-              color: AppColors.primaryText.withValues(alpha: 0.85),
+              color: isDark ? AppColors.darkPrimaryText.withValues(alpha: 0.9) : AppColors.primaryText.withValues(alpha: 0.85),
             ),
           ),
           const SizedBox(height: 6),
@@ -105,24 +106,27 @@ class AlertCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.7),
+              color: isDark ? AppColors.darkCardSubtleBg : Colors.white.withValues(alpha: 0.7),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.border, width: 0.8),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.border,
+                width: 0.8,
+              ),
             ),
             child: Row(
               children: [
                 Icon(
                   Icons.info_outline_rounded,
                   size: 14,
-                  color: AppColors.secondaryText,
+                  color: isDark ? AppColors.darkMutedText : AppColors.secondaryText,
                 ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     alert.investigationAdvice,
-                    style: AppTypography.muted.copyWith(
+                    style: (isDark ? AppTypography.darkSecondary : AppTypography.muted).copyWith(
                       fontSize: 11,
-                      color: AppColors.secondaryText,
+                      color: isDark ? AppColors.darkMutedText : AppColors.secondaryText,
                     ),
                   ),
                 ),
@@ -135,20 +139,20 @@ class AlertCard extends StatelessWidget {
             child: TextButton.icon(
               onPressed: onViewDetails,
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.primaryDeepOcean,
+                foregroundColor: isDark ? AppColors.primaryAqua : AppColors.primaryDeepOcean,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
-                  side: const BorderSide(color: AppColors.border),
+                  side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.border),
                 ),
-                backgroundColor: Colors.white,
+                backgroundColor: isDark ? AppColors.darkCardBackground : Colors.white,
               ),
               icon: const Icon(Icons.arrow_forward_rounded, size: 16),
               label: Text(
                 'View Details',
                 style: AppTypography.button.copyWith(
                   fontSize: 13,
-                  color: AppColors.primaryDeepOcean,
+                  color: isDark ? AppColors.primaryAqua : AppColors.primaryDeepOcean,
                 ),
               ),
             ),

@@ -18,6 +18,8 @@ class WaterSourceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
@@ -25,17 +27,19 @@ class WaterSourceCard extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.cardBackground,
+          color: isDark ? AppColors.darkCardBackground : AppColors.cardBackground,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isSelected ? AppColors.primaryAqua : AppColors.border,
+            color: isSelected
+                ? AppColors.primaryAqua
+                : (isDark ? AppColors.darkBorder : AppColors.border),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: [
             BoxShadow(
               color: isSelected
-                  ? AppColors.primaryAqua.withValues(alpha: 0.12)
-                  : Colors.black.withValues(alpha: 0.02),
+                  ? AppColors.primaryAqua.withValues(alpha: isDark ? 0.25 : 0.12)
+                  : Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
               blurRadius: isSelected ? 12 : 6,
               offset: const Offset(0, 3),
             ),
@@ -54,7 +58,7 @@ class WaterSourceCard extends StatelessWidget {
                     children: [
                       Text(
                         source.name,
-                        style: AppTypography.cardTitle.copyWith(
+                        style: (isDark ? AppTypography.darkCardTitle : AppTypography.cardTitle).copyWith(
                           fontSize: 16.5,
                         ),
                         maxLines: 1,
@@ -63,16 +67,16 @@ class WaterSourceCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.location_on_outlined,
                             size: 13,
-                            color: AppColors.mutedText,
+                            color: isDark ? AppColors.darkMutedText : AppColors.mutedText,
                           ),
                           const SizedBox(width: 3),
                           Expanded(
                             child: Text(
                               source.coordinates,
-                              style: AppTypography.muted.copyWith(fontSize: 11),
+                              style: (isDark ? AppTypography.darkSecondary : AppTypography.muted).copyWith(fontSize: 11),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -92,19 +96,19 @@ class WaterSourceCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.mainBackground,
+                color: isDark ? AppColors.darkCardSubtleBg : AppColors.mainBackground,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _metricItem('pH', source.ph?.toStringAsFixed(1) ?? '--'),
-                  _divider(),
-                  _metricItem('TDS', source.tdsEc != null ? '${source.tds} ppm' : '--'),
-                  _divider(),
-                  _metricItem('Turbidity', source.turbidity != null ? '${source.turbidity} NTU' : '--'),
-                  _divider(),
-                  _metricItem('Temp', source.temperature != null ? '${source.temperature}°C' : '--'),
+                  _metricItem('pH', source.ph?.toStringAsFixed(1) ?? '--', isDark),
+                  _divider(isDark),
+                  _metricItem('TDS', source.tdsEc != null ? '${source.tds} ppm' : '--', isDark),
+                  _divider(isDark),
+                  _metricItem('Turbidity', source.turbidity != null ? '${source.turbidity} NTU' : '--', isDark),
+                  _divider(isDark),
+                  _metricItem('Temp', source.temperature != null ? '${source.temperature}°C' : '--', isDark),
                 ],
               ),
             ),
@@ -116,15 +120,15 @@ class WaterSourceCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.access_time_rounded,
                       size: 13,
-                      color: AppColors.mutedText,
+                      color: isDark ? AppColors.darkMutedText : AppColors.mutedText,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       source.lastUpdated,
-                      style: AppTypography.muted.copyWith(fontSize: 11.5),
+                      style: (isDark ? AppTypography.darkSecondary : AppTypography.muted).copyWith(fontSize: 11.5),
                     ),
                   ],
                 ),
@@ -133,16 +137,16 @@ class WaterSourceCard extends StatelessWidget {
                     Text(
                       'View Details',
                       style: AppTypography.secondary.copyWith(
-                        color: AppColors.primaryDeepOcean,
+                        color: isDark ? AppColors.primaryAqua : AppColors.primaryDeepOcean,
                         fontWeight: FontWeight.w600,
                         fontSize: 12,
                       ),
                     ),
                     const SizedBox(width: 2),
-                    const Icon(
+                    Icon(
                       Icons.chevron_right_rounded,
                       size: 16,
-                      color: AppColors.primaryDeepOcean,
+                      color: isDark ? AppColors.primaryAqua : AppColors.primaryDeepOcean,
                     ),
                   ],
                 ),
@@ -154,19 +158,19 @@ class WaterSourceCard extends StatelessWidget {
     );
   }
 
-  Widget _metricItem(String label, String value) {
+  Widget _metricItem(String label, String value, bool isDark) {
     return Column(
       children: [
         Text(
           label,
-          style: AppTypography.muted.copyWith(fontSize: 10.5),
+          style: (isDark ? AppTypography.darkSecondary : AppTypography.muted).copyWith(fontSize: 10.5),
         ),
         const SizedBox(height: 1),
         Text(
           value,
           style: AppTypography.secondary.copyWith(
             fontWeight: FontWeight.w700,
-            color: AppColors.primaryText,
+            color: isDark ? AppColors.darkPrimaryText : AppColors.primaryText,
             fontSize: 12,
           ),
         ),
@@ -174,11 +178,11 @@ class WaterSourceCard extends StatelessWidget {
     );
   }
 
-  Widget _divider() {
+  Widget _divider(bool isDark) {
     return Container(
       height: 22,
       width: 1,
-      color: AppColors.border,
+      color: isDark ? AppColors.darkBorder : AppColors.border,
     );
   }
 }
