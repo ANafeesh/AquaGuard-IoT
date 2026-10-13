@@ -12,11 +12,13 @@ function Resize-And-Save {
         [System.Drawing.Image]$Image,
         [int]$Width,
         [int]$Height,
-        [string]$DestinationPath
+        [string]$DestinationPath,
+        [bool]$NoAlpha = $false
     )
 
+    $format = if ($NoAlpha) { [System.Drawing.Imaging.PixelFormat]::Format24bppRgb } else { [System.Drawing.Imaging.PixelFormat]::Format32bppArgb }
     $destRect = New-Object System.Drawing.Rectangle(0, 0, $Width, $Height)
-    $destImage = New-Object System.Drawing.Bitmap($Width, $Height, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+    $destImage = New-Object System.Drawing.Bitmap($Width, $Height, $format)
 
     $graphics = [System.Drawing.Graphics]::FromImage($destImage)
     $graphics.CompositingMode = [System.Drawing.Drawing2D.CompositingMode]::SourceCopy
@@ -80,7 +82,8 @@ foreach ($it in $iosTargets) {
     $base = Join-Path $RootDir $it
     if (Test-Path $base) {
         foreach ($sz in $iosSizes) {
-            Resize-And-Save -Image $srcImage -Width $sz.Width -Height $sz.Height -DestinationPath (Join-Path $base $sz.Name)
+            $isMarketing1024 = ($sz.Width -eq 1024)
+            Resize-And-Save -Image $srcImage -Width $sz.Width -Height $sz.Height -DestinationPath (Join-Path $base $sz.Name) -NoAlpha $isMarketing1024
         }
     }
 }
