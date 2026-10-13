@@ -1,6 +1,5 @@
-// File generated for AquaGuard IoT Smart Water Monitoring.
-// Replace the placeholder values below with your Firebase Project configuration,
-// or run `flutterfire configure` to automatically overwrite with official values.
+// File configured for AquaGuard IoT Smart Water Monitoring.
+// Project: aquaguard-iot-b8ce2
 
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
@@ -17,23 +16,19 @@ import 'package:flutter/foundation.dart'
 /// );
 /// ```
 class DefaultFirebaseOptions {
-  /// Replace these with your actual Firebase Project configuration values,
-  /// or run `flutterfire configure` from the terminal.
-  static const String projectId = 'aquaguard-iot';
-  static const String apiKey = 'AIzaSyPlaceholderAquaGuardKey1234567890';
-  static const String appId = '1:123456789012:web:placeholderAquaGuardAppId';
-  static const String messagingSenderId = '123456789012';
-  static const String storageBucket = 'aquaguard-iot.firebasestorage.app';
+  static const String projectId = 'aquaguard-iot-b8ce2';
+  static const String apiKey = 'AIzaSyCfVyFmFrvELir5w9_2-_RZwZ-m8t-XMXE';
+  static const String appId = '1:113372996651:web:bd9a0cf19e47b8ebbab66e';
+  static const String messagingSenderId = '113372996651';
+  static const String storageBucket = 'aquaguard-iot-b8ce2.firebasestorage.app';
+  static const String authDomain = 'aquaguard-iot-b8ce2.firebaseapp.com';
+  static const String measurementId = 'G-ZTN8CTEJ2L';
 
-  /// Helper to check if actual credentials (not placeholder) have been provided
-  static bool get isConfigured {
-    // If apiKey is still the placeholder, we treat it as unconfigured
-    // and gracefully fall back to mock repositories without throwing exceptions.
-    return apiKey.isNotEmpty &&
-        !apiKey.contains('Placeholder') &&
-        projectId.isNotEmpty &&
-        !projectId.contains('placeholder');
-  }
+  /// Helper to check if actual credentials have been configured
+  static bool get isConfigured =>
+      apiKey.isNotEmpty &&
+      projectId.isNotEmpty &&
+      !apiKey.contains('Placeholder');
 
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
@@ -65,13 +60,14 @@ class DefaultFirebaseOptions {
     appId: appId,
     messagingSenderId: messagingSenderId,
     projectId: projectId,
-    authDomain: '$projectId.firebaseapp.com',
+    authDomain: authDomain,
     storageBucket: storageBucket,
+    measurementId: measurementId,
   );
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: apiKey,
-    appId: '1:123456789012:android:placeholderAquaGuardAndroid',
+    appId: '1:113372996651:android:bd9a0cf19e47b8ebbab66e',
     messagingSenderId: messagingSenderId,
     projectId: projectId,
     storageBucket: storageBucket,
@@ -79,7 +75,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: apiKey,
-    appId: '1:123456789012:ios:placeholderAquaGuardIos',
+    appId: '1:113372996651:ios:bd9a0cf19e47b8ebbab66e',
     messagingSenderId: messagingSenderId,
     projectId: projectId,
     storageBucket: storageBucket,
@@ -88,7 +84,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: apiKey,
-    appId: '1:123456789012:ios:placeholderAquaGuardIos',
+    appId: '1:113372996651:ios:bd9a0cf19e47b8ebbab66e',
     messagingSenderId: messagingSenderId,
     projectId: projectId,
     storageBucket: storageBucket,
@@ -100,7 +96,8 @@ class DefaultFirebaseOptions {
     appId: appId,
     messagingSenderId: messagingSenderId,
     projectId: projectId,
-    authDomain: '$projectId.firebaseapp.com',
+    authDomain: authDomain,
     storageBucket: storageBucket,
+    measurementId: measurementId,
   );
 }
