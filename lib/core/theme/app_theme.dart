@@ -20,13 +20,13 @@ class AppTheme {
         surface: AppColors.cardBackground,
         onSurface: AppColors.primaryText,
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: Colors.white,
         foregroundColor: AppColors.primaryText,
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
-        systemOverlayStyle: SystemUiOverlayStyle(
+        systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarBrightness: Brightness.light,
           statusBarIconBrightness: Brightness.dark,
@@ -34,7 +34,7 @@ class AppTheme {
           systemNavigationBarIconBrightness: Brightness.dark,
         ),
         centerTitle: false,
-        titleTextStyle: TextStyle(
+        titleTextStyle: const TextStyle(
           fontSize: 18.5,
           fontWeight: FontWeight.w700,
           color: AppColors.primaryText,
@@ -42,7 +42,7 @@ class AppTheme {
           letterSpacing: -0.3,
         ),
       ),
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: AppColors.cardBackground,
         elevation: 0,
         margin: EdgeInsets.zero,
@@ -134,13 +134,13 @@ class AppTheme {
         surface: AppColors.darkCardBackground,
         onSurface: AppColors.darkPrimaryText,
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: AppColors.darkCardBackground,
         foregroundColor: AppColors.darkPrimaryText,
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
-        systemOverlayStyle: SystemUiOverlayStyle(
+        systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarBrightness: Brightness.dark,
           statusBarIconBrightness: Brightness.light,
@@ -148,7 +148,7 @@ class AppTheme {
           systemNavigationBarIconBrightness: Brightness.light,
         ),
         centerTitle: false,
-        titleTextStyle: TextStyle(
+        titleTextStyle: const TextStyle(
           fontSize: 18.5,
           fontWeight: FontWeight.w700,
           color: AppColors.darkPrimaryText,
@@ -156,7 +156,7 @@ class AppTheme {
           letterSpacing: -0.3,
         ),
       ),
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: AppColors.darkCardBackground,
         elevation: 0,
         margin: EdgeInsets.zero,
