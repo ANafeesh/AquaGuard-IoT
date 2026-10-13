@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
+const List<String> _fontFallbacks = [
+  'SF Pro Display',
+  'SF Pro Text',
+  '-apple-system',
+  'BlinkMacSystemFont',
+  'Inter',
+  'Roboto',
+  'Segoe UI',
+  'sans-serif',
+];
+
 /// AquaGuard Premium Typography Hierarchy
 /// Crisp, modern typography engineered for mobile clarity, high-contrast field readability,
 /// and native iOS / Android system font rendering.
 class AppTypography {
-  static const List<String> fontFallbacks = [
-    'SF Pro Display',
-    'SF Pro Text',
-    '-apple-system',
-    'BlinkMacSystemFont',
-    'Inter',
-    'Roboto',
-    'Segoe UI',
-    'sans-serif',
-  ];
+  static const List<String> fontFallbacks = _fontFallbacks;
 
   // Page titles: 24–28px, Bold / Heavy
   static const TextStyle largeTitle = TextStyle(
@@ -23,7 +25,7 @@ class AppTypography {
     color: AppColors.primaryText,
     letterSpacing: -0.6,
     height: 1.2,
-    fontFamilyFallback: fontFallbacks,
+    fontFamilyFallback: _fontFallbacks,
   );
 
   static const TextStyle darkLargeTitle = TextStyle(
@@ -32,7 +34,7 @@ class AppTypography {
     color: AppColors.darkPrimaryText,
     letterSpacing: -0.6,
     height: 1.2,
-    fontFamilyFallback: fontFallbacks,
+    fontFamilyFallback: _fontFallbacks,
   );
 
   // Section heading: 18–20px, Bold
@@ -42,7 +44,7 @@ class AppTypography {
     color: AppColors.primaryText,
     letterSpacing: -0.35,
     height: 1.25,
-    fontFamilyFallback: fontFallbacks,
+    fontFamilyFallback: _fontFallbacks,
   );
 
   static const TextStyle darkSectionHeading = TextStyle(
@@ -51,7 +53,7 @@ class AppTypography {
     color: AppColors.darkPrimaryText,
     letterSpacing: -0.35,
     height: 1.25,
-    fontFamilyFallback: fontFallbacks,
+    fontFamilyFallback: _fontFallbacks,
   );
 
   // Card title: 15–16px, SemiBold
@@ -61,7 +63,7 @@ class AppTypography {
     color: AppColors.primaryText,
     letterSpacing: -0.2,
     height: 1.3,
-    fontFamilyFallback: fontFallbacks,
+    fontFamilyFallback: _fontFallbacks,
   );
 
   static const TextStyle darkCardTitle = TextStyle(
@@ -70,7 +72,7 @@ class AppTypography {
     color: AppColors.darkPrimaryText,
     letterSpacing: -0.2,
     height: 1.3,
-    fontFamilyFallback: fontFallbacks,
+    fontFamilyFallback: _fontFallbacks,
   );
 
   // Body: 14px, Regular / Medium
@@ -80,7 +82,7 @@ class AppTypography {
     color: AppColors.primaryText,
     letterSpacing: -0.1,
     height: 1.45,
-    fontFamilyFallback: fontFallbacks,
+    fontFamilyFallback: _fontFallbacks,
   );
 
   static const TextStyle darkBody = TextStyle(
@@ -89,7 +91,7 @@ class AppTypography {
     color: AppColors.darkPrimaryText,
     letterSpacing: -0.1,
     height: 1.45,
-    fontFamilyFallback: fontFallbacks,
+    fontFamilyFallback: _fontFallbacks,
   );
 
   // Secondary text: 12.5px, Medium
@@ -99,7 +101,7 @@ class AppTypography {
     color: AppColors.secondaryText,
     letterSpacing: 0,
     height: 1.35,
-    fontFamilyFallback: fontFallbacks,
+    fontFamilyFallback: _fontFallbacks,
   );
 
   static const TextStyle darkSecondary = TextStyle(
@@ -108,7 +110,7 @@ class AppTypography {
     color: AppColors.darkSecondaryText,
     letterSpacing: 0,
     height: 1.35,
-    fontFamilyFallback: fontFallbacks,
+    fontFamilyFallback: _fontFallbacks,
   );
 
   // Muted text: 11-12px
@@ -118,7 +120,7 @@ class AppTypography {
     color: AppColors.mutedText,
     letterSpacing: 0.05,
     height: 1.3,
-    fontFamilyFallback: fontFallbacks,
+    fontFamilyFallback: _fontFallbacks,
   );
 
   // Observation Quote Note
@@ -128,7 +130,7 @@ class AppTypography {
     color: AppColors.primaryText,
     letterSpacing: -0.1,
     height: 1.45,
-    fontFamilyFallback: fontFallbacks,
+    fontFamilyFallback: _fontFallbacks,
   );
 
   static const TextStyle darkObservationNote = TextStyle(
@@ -137,7 +139,7 @@ class AppTypography {
     color: AppColors.darkPrimaryText,
     letterSpacing: -0.1,
     height: 1.45,
-    fontFamilyFallback: fontFallbacks,
+    fontFamilyFallback: _fontFallbacks,
   );
 
   // Stat Numbers in Dashboard Cards
@@ -146,7 +148,7 @@ class AppTypography {
     fontWeight: FontWeight.w800,
     letterSpacing: -0.5,
     height: 1.15,
-    fontFamilyFallback: fontFallbacks,
+    fontFamilyFallback: _fontFallbacks,
   );
 
   // Measurement values: 28–32px, ExtraBold
@@ -156,7 +158,7 @@ class AppTypography {
     color: AppColors.primaryText,
     letterSpacing: -0.5,
     height: 1.15,
-    fontFamilyFallback: fontFallbacks,
+    fontFamilyFallback: _fontFallbacks,
   );
 
   static const TextStyle darkMeasurementValue = TextStyle(
@@ -165,7 +167,7 @@ class AppTypography {
     color: AppColors.darkPrimaryText,
     letterSpacing: -0.5,
     height: 1.15,
-    fontFamilyFallback: fontFallbacks,
+    fontFamilyFallback: _fontFallbacks,
   );
 
   // Status Badge text: 11px, SemiBold
@@ -173,7 +175,7 @@ class AppTypography {
     fontSize: 11,
     fontWeight: FontWeight.w700,
     letterSpacing: 0.15,
-    fontFamilyFallback: fontFallbacks,
+    fontFamilyFallback: _fontFallbacks,
   );
 
   // Filter Chip text: 12px, SemiBold
@@ -181,7 +183,7 @@ class AppTypography {
     fontSize: 12,
     fontWeight: FontWeight.w600,
     letterSpacing: 0.1,
-    fontFamilyFallback: fontFallbacks,
+    fontFamilyFallback: _fontFallbacks,
   );
 
   // Button text: 14.5px, SemiBold
@@ -189,6 +191,6 @@ class AppTypography {
     fontSize: 14.5,
     fontWeight: FontWeight.w700,
     letterSpacing: 0.15,
-    fontFamilyFallback: fontFallbacks,
+    fontFamilyFallback: _fontFallbacks,
   );
 }

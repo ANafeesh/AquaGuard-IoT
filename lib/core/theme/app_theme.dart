@@ -34,7 +34,7 @@ class AppTheme {
           systemNavigationBarIconBrightness: Brightness.dark,
         ),
         centerTitle: false,
-        titleTextStyle: const TextStyle(
+        titleTextStyle: TextStyle(
           fontSize: 18.5,
           fontWeight: FontWeight.w700,
           color: AppColors.primaryText,
@@ -148,7 +148,7 @@ class AppTheme {
           systemNavigationBarIconBrightness: Brightness.light,
         ),
         centerTitle: false,
-        titleTextStyle: const TextStyle(
+        titleTextStyle: TextStyle(
           fontSize: 18.5,
           fontWeight: FontWeight.w700,
           color: AppColors.darkPrimaryText,
