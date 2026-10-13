@@ -144,7 +144,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                     FadeSlideEntrance(
                       index: 0,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -155,7 +155,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                                   Text(
                                     user != null ? 'Welcome, ${user.displayName}' : 'AquaGuard',
                                     style: (isDark ? AppTypography.darkSecondary : AppTypography.secondary).copyWith(
-                                      fontSize: 13,
+                                      fontSize: 12.5,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -164,8 +164,8 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                                   Text(
                                     'Water Quality Dashboard',
                                     style: (isDark ? AppTypography.darkSectionHeading : AppTypography.sectionHeading).copyWith(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w700,
+                                      fontSize: 19.5,
+                                      fontWeight: FontWeight.w800,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -177,15 +177,25 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                             // Avatar
                             GestureDetector(
                               onTap: () => widget.onNavigateToTab?.call(4),
-                              child: CircleAvatar(
-                                radius: 20,
-                                backgroundColor: AppColors.primaryDeepOcean,
-                                child: Text(
-                                  user?.initials ?? 'AG',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
+                              child: Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: AppColors.primaryAqua.withValues(alpha: 0.5),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: CircleAvatar(
+                                  radius: 18,
+                                  backgroundColor: AppColors.primaryDeepOcean,
+                                  child: Text(
+                                    user?.initials ?? 'AG',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -199,17 +209,17 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                     const FadeSlideEntrance(
                       index: 1,
                       child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20),
-                        child: DisclaimerBanner(),
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: DisclaimerBanner(compact: true),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
 
                     // Quick Summary Metrics Row (Sources, Unread Alerts, Community Readings this week)
                     FadeSlideEntrance(
                       index: 2,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Row(
                           children: [
                             // Monitored Sources Card
@@ -224,20 +234,20 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                                 onTap: () => widget.onNavigateToTab?.call(1),
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             // Unacknowledged Alerts Card
                             Expanded(
                               child: _buildSummaryCard(
                                 title: 'Alerts',
                                 value: unreadCount.toString(),
-                                subtitle: unreadCount == 0 ? 'No deviations' : 'Unacknowledged',
+                                subtitle: unreadCount == 0 ? 'Normal' : 'Unacknowledged',
                                 icon: Icons.notification_important_rounded,
                                 color: unreadCount > 0 ? AppColors.statusWarning : AppColors.teal,
                                 isDark: isDark,
                                 onTap: () => widget.onNavigateToTab?.call(2),
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             // Community Readings this week Card
                             Expanded(
                               child: _buildSummaryCard(
@@ -254,7 +264,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 18),
 
                     // SUMMARY CARDS FOR THE LATEST READING FROM EACH MONITORED SOURCE
                     FadeSlideEntrance(
@@ -495,7 +505,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 85),
                   ],
                 ),
               ),
@@ -518,16 +528,19 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
     return PressableScale(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 12),
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkCardBackground : Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+          border: Border.all(
+            color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
+            width: 0.8,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
               blurRadius: 8,
-              offset: const Offset(0, 3),
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -537,28 +550,44 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  title,
-                  style: AppTypography.muted.copyWith(fontSize: 11.5, fontWeight: FontWeight.w600),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? AppColors.darkMutedText : const Color(0xFF64748B),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                Icon(icon, size: 16, color: color),
+                Container(
+                  padding: const EdgeInsets.all(4.5),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: isDark ? 0.2 : 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, size: 13, color: color),
+                ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Text(
               value,
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
                 color: isDark ? AppColors.darkPrimaryText : AppColors.primaryText,
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 1),
             Text(
               subtitle,
               style: TextStyle(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w500,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
                 color: color,
               ),
               maxLines: 1,
@@ -583,8 +612,8 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        width: 230,
-        margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        width: 250,
+        margin: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkCardBackground : Colors.white,
@@ -592,16 +621,16 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
           border: Border.all(
             color: isSelected
                 ? AppColors.primaryAqua
-                : (isDark ? AppColors.darkBorder : AppColors.border),
-            width: isSelected ? 2.0 : 1.0,
+                : (isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0)),
+            width: isSelected ? 1.5 : 0.8,
           ),
           boxShadow: [
             BoxShadow(
               color: isSelected
-                  ? AppColors.primaryAqua.withValues(alpha: isDark ? 0.35 : 0.18)
+                  ? AppColors.primaryAqua.withValues(alpha: isDark ? 0.3 : 0.14)
                   : Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-              blurRadius: isSelected ? 12 : 8,
-              offset: const Offset(0, 3),
+              blurRadius: isSelected ? 10 : 6,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -648,14 +677,18 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
               decoration: BoxDecoration(
                 color: isDark ? AppColors.darkCardSubtleBg : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
+                  width: 0.6,
+                ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _sourceMetric('pH', source.ph?.toStringAsFixed(1) ?? '--'),
-                  _sourceMetric('TDS', '${source.tds}'),
-                  _sourceMetric('Turb', source.turbidity?.toStringAsFixed(1) ?? '--'),
-                  _sourceMetric('Temp', '${source.temperature?.toStringAsFixed(0) ?? "--"}°C'),
+                  _sourceMetric('pH', source.ph?.toStringAsFixed(1) ?? '--', isDark),
+                  _sourceMetric('TDS', '${source.tds}', isDark),
+                  _sourceMetric('Turb', source.turbidity?.toStringAsFixed(1) ?? '--', isDark),
+                  _sourceMetric('Temp', '${source.temperature?.toStringAsFixed(0) ?? "--"}°C', isDark),
                 ],
               ),
             ),
@@ -701,14 +734,25 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
     );
   }
 
-  Widget _sourceMetric(String label, String value) {
+  Widget _sourceMetric(String label, String value, bool isDark) {
     return Column(
       children: [
-        Text(label, style: const TextStyle(fontSize: 9, color: AppColors.mutedText)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.w500,
+            color: isDark ? AppColors.darkMutedText : const Color(0xFF64748B),
+          ),
+        ),
         const SizedBox(height: 1),
         Text(
           value,
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: isDark ? Colors.white : const Color(0xFF0F172A),
+          ),
         ),
       ],
     );

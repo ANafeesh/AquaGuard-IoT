@@ -20,30 +20,33 @@ class DisclaimerBanner extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      margin: margin ?? const EdgeInsets.symmetric(vertical: 8),
+      margin: margin ?? const EdgeInsets.symmetric(vertical: 6),
       padding: EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: compact ? 10 : 12,
+        horizontal: 13,
+        vertical: compact ? 9 : 11,
       ),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF0FDF4),
+        color: isDark ? const Color(0xFF132238) : const Color(0xFFF0FDF4),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDark
-              ? AppColors.teal.withValues(alpha: 0.3)
-              : AppColors.teal.withValues(alpha: 0.35),
-          width: 1,
+        border: Border(
+          top: BorderSide(color: isDark ? AppColors.darkBorder : const Color(0xFFD1FAE5), width: 0.8),
+          right: BorderSide(color: isDark ? AppColors.darkBorder : const Color(0xFFD1FAE5), width: 0.8),
+          bottom: BorderSide(color: isDark ? AppColors.darkBorder : const Color(0xFFD1FAE5), width: 0.8),
+          left: const BorderSide(color: AppColors.teal, width: 3.5),
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.info_outline_rounded,
-            size: compact ? 18 : 20,
-            color: AppColors.teal,
+          const Padding(
+            padding: EdgeInsets.only(top: 1.0),
+            child: Icon(
+              Icons.info_outline_rounded,
+              size: 17,
+              color: AppColors.teal,
+            ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 9),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,7 +55,7 @@ class DisclaimerBanner extends StatelessWidget {
                   Text(
                     'Indicator Monitoring Notice',
                     style: (isDark ? AppTypography.darkCardTitle : AppTypography.cardTitle).copyWith(
-                      fontSize: 13,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w700,
                       color: AppColors.teal,
                     ),
@@ -65,7 +68,7 @@ class DisclaimerBanner extends StatelessWidget {
                   style: (isDark ? AppTypography.darkSecondary : AppTypography.secondary).copyWith(
                     fontSize: compact ? 11.5 : 12,
                     height: 1.35,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF334155),
+                    color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
                   ),
                 ),
               ],

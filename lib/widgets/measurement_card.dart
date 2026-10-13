@@ -47,22 +47,26 @@ class MeasurementCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final iconColor = _getIconColor(reading.type);
     final iconBgColor = _getIconBgColor(reading.type);
 
     return PressableScale(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
-          color: AppColors.cardBackground,
+          color: isDark ? AppColors.darkCardBackground : Colors.white,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.border, width: 1),
+          border: Border.all(
+            color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
+            width: 0.8,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -75,8 +79,8 @@ class MeasurementCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  width: 38,
-                  height: 38,
+                  width: 36,
+                  height: 36,
                   decoration: BoxDecoration(
                     color: iconBgColor,
                     borderRadius: BorderRadius.circular(10),
@@ -84,7 +88,7 @@ class MeasurementCard extends StatelessWidget {
                   child: Icon(
                     _getIcon(reading.type),
                     color: iconColor,
-                    size: 20,
+                    size: 19,
                   ),
                 ),
                 StatusBadge(
@@ -93,19 +97,19 @@ class MeasurementCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
 
             // Middle: Parameter Name
             Text(
               reading.shortName,
-              style: AppTypography.secondary.copyWith(
-                fontWeight: FontWeight.w600,
-                color: AppColors.secondaryText,
+              style: (isDark ? AppTypography.darkSecondary : AppTypography.secondary).copyWith(
+                fontWeight: FontWeight.w700,
+                fontSize: 12.5,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
 
             // Value + Unit
             Row(
@@ -116,15 +120,16 @@ class MeasurementCard extends StatelessWidget {
                   reading.type == ParameterType.tds
                       ? reading.value.toInt().toString()
                       : reading.value.toStringAsFixed(1),
-                  style: AppTypography.measurementValue,
+                  style: isDark ? AppTypography.darkMeasurementValue : AppTypography.measurementValue,
                 ),
                 if (reading.unit.isNotEmpty) ...[
                   const SizedBox(width: 4),
                   Text(
                     reading.unit,
-                    style: AppTypography.secondary.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.mutedText,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                      color: isDark ? AppColors.darkMutedText : const Color(0xFF64748B),
                     ),
                   ),
                 ],
@@ -132,11 +137,11 @@ class MeasurementCard extends StatelessWidget {
             ),
 
             // Subtle baseline indicator note
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Text(
               'Target: ${reading.normalMin} - ${reading.normalMax} ${reading.unit}',
               style: AppTypography.muted.copyWith(
-                fontSize: 10.5,
+                fontSize: 10,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

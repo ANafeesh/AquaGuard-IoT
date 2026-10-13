@@ -258,63 +258,88 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
 
             return SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Filter Chips & Counts
+                  // Filter Switcher
                   Row(
                     children: [
-                      FilterChip(
-                        selected: _selectedFilter == 'All',
-                        label: Text('All Alerts (${allAlerts.length})'),
-                        labelStyle: TextStyle(
-                          fontSize: 12,
-                          fontWeight: _selectedFilter == 'All' ? FontWeight.w700 : FontWeight.w500,
-                          color: _selectedFilter == 'All' ? Colors.white : (isDark ? AppColors.darkPrimaryText : AppColors.primaryText),
+                      InkWell(
+                        onTap: () => setState(() => _selectedFilter = 'All'),
+                        borderRadius: BorderRadius.circular(20),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: _selectedFilter == 'All'
+                                ? AppColors.primaryDeepOcean
+                                : (isDark ? AppColors.darkCardBackground : Colors.white),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: _selectedFilter == 'All'
+                                  ? AppColors.primaryDeepOcean
+                                  : (isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0)),
+                              width: 0.9,
+                            ),
+                          ),
+                          child: Text(
+                            'All Alerts (${allAlerts.length})',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: _selectedFilter == 'All' ? FontWeight.w700 : FontWeight.w500,
+                              color: _selectedFilter == 'All'
+                                  ? Colors.white
+                                  : (isDark ? AppColors.darkPrimaryText : AppColors.primaryText),
+                            ),
+                          ),
                         ),
-                        selectedColor: AppColors.primaryDeepOcean,
-                        backgroundColor: isDark ? AppColors.darkCardBackground : Colors.white,
-                        side: BorderSide(
-                          color: _selectedFilter == 'All' ? AppColors.primaryDeepOcean : (isDark ? AppColors.darkBorder : AppColors.border),
-                        ),
-                        onSelected: (val) {
-                          setState(() {
-                            _selectedFilter = 'All';
-                          });
-                        },
                       ),
                       const SizedBox(width: 8),
-                      FilterChip(
-                        selected: _selectedFilter == 'Unacknowledged',
-                        label: Text('Unacknowledged ($unreadCount)'),
-                        labelStyle: TextStyle(
-                          fontSize: 12,
-                          fontWeight: _selectedFilter == 'Unacknowledged' ? FontWeight.w700 : FontWeight.w500,
-                          color: _selectedFilter == 'Unacknowledged' ? Colors.white : (isDark ? AppColors.darkPrimaryText : AppColors.primaryText),
+                      InkWell(
+                        onTap: () => setState(() => _selectedFilter = 'Unacknowledged'),
+                        borderRadius: BorderRadius.circular(20),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: _selectedFilter == 'Unacknowledged'
+                                ? AppColors.primaryDeepOcean
+                                : (isDark ? AppColors.darkCardBackground : Colors.white),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: _selectedFilter == 'Unacknowledged'
+                                  ? AppColors.primaryDeepOcean
+                                  : (isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0)),
+                              width: 0.9,
+                            ),
+                          ),
+                          child: Text(
+                            'Unacknowledged ($unreadCount)',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: _selectedFilter == 'Unacknowledged' ? FontWeight.w700 : FontWeight.w500,
+                              color: _selectedFilter == 'Unacknowledged'
+                                  ? Colors.white
+                                  : (isDark ? AppColors.darkPrimaryText : AppColors.primaryText),
+                            ),
+                          ),
                         ),
-                        selectedColor: AppColors.primaryDeepOcean,
-                        backgroundColor: isDark ? AppColors.darkCardBackground : Colors.white,
-                        side: BorderSide(
-                          color: _selectedFilter == 'Unacknowledged' ? AppColors.primaryDeepOcean : (isDark ? AppColors.darkBorder : AppColors.border),
-                        ),
-                        onSelected: (val) {
-                          setState(() {
-                            _selectedFilter = 'Unacknowledged';
-                          });
-                        },
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
 
                   // Guideline note
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkCardBackground : Colors.white,
+                      color: isDark ? AppColors.darkCardBackground : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+                      border: Border.all(
+                        color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
+                        width: 0.8,
+                      ),
                     ),
                     child: Row(
                       children: [
@@ -329,7 +354,7 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
 
                   if (filteredAlerts.isEmpty) ...[
                     const SizedBox(height: 40),
@@ -352,175 +377,198 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
                         index: index,
                         child: Container(
                           margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: isDark ? AppColors.darkCardBackground : Colors.white,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: !alert.acknowledged
-                                  ? AppColors.statusWarning.withValues(alpha: 0.5)
-                                  : (isDark ? AppColors.darkBorder : AppColors.border),
-                              width: !alert.acknowledged ? 1.5 : 1.0,
+                            border: Border(
+                              top: BorderSide(color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0), width: 0.8),
+                              right: BorderSide(color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0), width: 0.8),
+                              bottom: BorderSide(color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0), width: 0.8),
+                              left: BorderSide(
+                                color: !alert.acknowledged
+                                    ? AppColors.statusWarning
+                                    : (isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0)),
+                                width: !alert.acknowledged ? 3.5 : 0.8,
+                              ),
                             ),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
                                 blurRadius: 8,
-                                offset: const Offset(0, 3),
+                                offset: const Offset(0, 2),
                               ),
                             ],
                           ),
                           child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
                             onTap: () => _showDetailSheet(alert, sources),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Stack(
-                                      alignment: Alignment.center,
-                                      children: [
-                                        if (!alert.acknowledged)
-                                          const PulseIndicator(
-                                            color: AppColors.statusWarning,
-                                            size: 16,
-                                            haloScale: 2.3,
-                                            duration: Duration(milliseconds: 1400),
-                                          ),
-                                        Container(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: isDark ? AppColors.statusWarningDarkBg : AppColors.statusWarningBg,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Icon(
-                                            Icons.warning_amber_rounded,
-                                            size: 18,
-                                            color: AppColors.statusWarning,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                'Unusual ${alert.parameter} reading',
-                                                style: (isDark ? AppTypography.darkCardTitle : AppTypography.cardTitle).copyWith(
-                                                  fontSize: 14.5,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(15),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          if (!alert.acknowledged)
+                                            const PulseIndicator(
+                                              color: AppColors.statusWarning,
+                                              size: 16,
+                                              haloScale: 2.2,
+                                              duration: Duration(milliseconds: 1400),
                                             ),
+                                          Container(
+                                            padding: const EdgeInsets.all(7.5),
+                                            decoration: BoxDecoration(
+                                              color: isDark ? AppColors.statusWarningDarkBg : AppColors.statusWarningBg,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(
+                                              Icons.warning_amber_rounded,
+                                              size: 17,
+                                              color: AppColors.statusWarning,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    'Unusual ${alert.parameter} reading',
+                                                    style: (isDark ? AppTypography.darkCardTitle : AppTypography.cardTitle).copyWith(
+                                                      fontSize: 14,
+                                                      fontWeight: FontWeight.w700,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Text(
+                                                  alert.timeAgo,
+                                                  style: AppTypography.muted.copyWith(fontSize: 11),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 2),
                                             Text(
-                                              alert.timeAgo,
-                                              style: AppTypography.muted.copyWith(fontSize: 11),
+                                              alert.waterSourceName,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                                color: AppColors.primaryAqua,
+                                              ),
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(height: 2),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 9),
+
+                                  // Exact message required by prompt
+                                  Text(
+                                    alert.message,
+                                    style: (isDark ? AppTypography.darkBody : AppTypography.body).copyWith(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w500,
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 9),
+
+                                  // Parameter, Value, Time row
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: isDark ? AppColors.darkCardSubtleBg : const Color(0xFFF8FAFC),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
+                                        width: 0.6,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
                                         Text(
-                                          alert.waterSourceName,
+                                          'Parameter: ${alert.parameter}',
                                           style: TextStyle(
-                                            fontSize: 12,
+                                            fontSize: 11.5,
                                             fontWeight: FontWeight.w600,
-                                            color: AppColors.primaryAqua,
+                                            color: isDark ? AppColors.darkSecondaryText : AppColors.secondaryText,
                                           ),
                                         ),
+                                        if (alert.value != null)
+                                          Text(
+                                            'Value: ${alert.value}',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w800,
+                                              color: AppColors.statusWarning,
+                                            ),
+                                          ),
+                                        Text(
+                                          alert.isToday ? 'Today' : 'Logged',
+                                          style: AppTypography.muted.copyWith(fontSize: 11),
+                                        ),
                                       ],
                                     ),
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
+                                  const SizedBox(height: 11),
 
-                              // Exact message required by prompt: "Unusual water-quality measurement detected at this location."
-                              Text(
-                                alert.message,
-                                style: (isDark ? AppTypography.darkBody : AppTypography.body).copyWith(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-
-                              // Parameter, Value, Time row
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: isDark ? AppColors.darkCardSubtleBg : const Color(0xFFF8FAFC),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      'Parameter: ${alert.parameter}',
-                                      style: AppTypography.muted.copyWith(fontSize: 11.5, fontWeight: FontWeight.w600),
-                                    ),
-                                    if (alert.value != null)
-                                      Text(
-                                        'Value: ${alert.value}',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w800,
-                                          color: AppColors.statusWarning,
+                                  // Acknowledge Button & Details link
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      if (!alert.acknowledged)
+                                        TextButton.icon(
+                                          style: TextButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            minimumSize: Size.zero,
+                                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                          ),
+                                          icon: const Icon(Icons.check_circle_outline_rounded, size: 15, color: AppColors.teal),
+                                          label: const Text('Acknowledge', style: TextStyle(color: AppColors.teal, fontWeight: FontWeight.w700, fontSize: 12)),
+                                          onPressed: () async {
+                                            await ref.read(alertRepositoryProvider).acknowledgeAlert(alert.id);
+                                          },
+                                        )
+                                      else
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.check_rounded, size: 14, color: AppColors.mutedText),
+                                            const SizedBox(width: 4),
+                                            Text('Acknowledged', style: AppTypography.muted.copyWith(fontSize: 11)),
+                                          ],
+                                        ),
+                                      InkWell(
+                                        onTap: () => _showDetailSheet(alert, sources),
+                                        child: const Row(
+                                          children: [
+                                            Text('View measurement & history', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryAqua)),
+                                            Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.primaryAqua),
+                                          ],
                                         ),
                                       ),
-                                    Text(
-                                      alert.isToday ? 'Today' : 'Logged',
-                                      style: AppTypography.muted.copyWith(fontSize: 11),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-
-                              // Acknowledge Button & Details link
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  if (!alert.acknowledged)
-                                    TextButton.icon(
-                                      icon: const Icon(Icons.check_circle_outline_rounded, size: 16, color: AppColors.teal),
-                                      label: const Text('Acknowledge', style: TextStyle(color: AppColors.teal, fontWeight: FontWeight.w700, fontSize: 12)),
-                                      onPressed: () async {
-                                        await ref.read(alertRepositoryProvider).acknowledgeAlert(alert.id);
-                                      },
-                                    )
-                                  else
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.check_rounded, size: 14, color: AppColors.mutedText),
-                                        const SizedBox(width: 4),
-                                        Text('Acknowledged', style: AppTypography.muted.copyWith(fontSize: 11)),
-                                      ],
-                                    ),
-                                  InkWell(
-                                    onTap: () => _showDetailSheet(alert, sources),
-                                    child: const Row(
-                                      children: [
-                                        Text('View measurement & history', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryAqua)),
-                                        Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.primaryAqua),
-                                      ],
-                                    ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  }),
+                      );
+                    }),
                   ],
+                  const SizedBox(height: 90),
                 ],
               ),
             );

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/app_config.dart';
 import '../constants/app_colors.dart';
@@ -140,16 +141,26 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: GestureDetector(
-        onTap: _navigateToNext, // Tap anywhere to proceed
-        behavior: HitTestBehavior.opaque,
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: const BoxDecoration(
-            gradient: AppColors.primaryGradient,
-          ),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarBrightness: Brightness.dark, // for iOS: renders white text/icons on ocean blue
+        statusBarIconBrightness: Brightness.light, // for Android: renders white icons
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarDividerColor: Colors.transparent,
+        systemNavigationBarIconBrightness: Brightness.light,
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.primaryDeepOcean,
+        body: GestureDetector(
+          onTap: _navigateToNext, // Tap anywhere to proceed
+          behavior: HitTestBehavior.opaque,
+          child: Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: AppColors.primaryGradient,
+            ),
           child: Stack(
             children: [
               // 1. Ambient Floating Water Bubble Particle Layer
@@ -431,6 +442,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 ),
               ),
             ],
+          ),
           ),
         ),
       ),

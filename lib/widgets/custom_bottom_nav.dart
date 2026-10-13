@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_typography.dart';
 import '../providers/app_state_providers.dart';
 
 class CustomBottomNav extends ConsumerWidget {
@@ -23,22 +24,22 @@ class CustomBottomNav extends ConsumerWidget {
         color: isDark ? AppColors.darkCardBackground : Colors.white,
         border: Border(
           top: BorderSide(
-            color: isDark ? AppColors.darkBorder : AppColors.border,
-            width: 1,
+            color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
+            width: 0.8,
           ),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, -4),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, -3),
           ),
         ],
       ),
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 66,
+          height: 62,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -96,75 +97,57 @@ class CustomBottomNav extends ConsumerWidget {
     final isSelected = currentIndex == index;
     final color = isSelected
         ? (isDark ? AppColors.primaryAqua : AppColors.primaryDeepOcean)
-        : (isDark ? AppColors.darkMutedText : AppColors.mutedText);
+        : (isDark ? AppColors.darkMutedText : const Color(0xFF64748B));
 
-    return InkWell(
-      onTap: () => onTap(index),
-      borderRadius: BorderRadius.circular(16),
-      splashColor: AppColors.primaryAqua.withValues(alpha: 0.15),
-      highlightColor: Colors.transparent,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeOutCubic,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? (isDark
-                            ? AppColors.primaryAqua.withValues(alpha: 0.2)
-                            : AppColors.primaryAqua.withValues(alpha: 0.14))
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: AppColors.primaryAqua.withValues(alpha: 0.2),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: AnimatedScale(
-                    scale: isSelected ? 1.08 : 1.0,
+    return Expanded(
+      child: InkWell(
+        onTap: () => onTap(index),
+        borderRadius: BorderRadius.circular(16),
+        splashColor: AppColors.primaryAqua.withValues(alpha: 0.12),
+        highlightColor: Colors.transparent,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
+                children: [
+                  AnimatedContainer(
                     duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeOutBack,
+                    curve: Curves.easeOutCubic,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? (isDark
+                              ? AppColors.primaryAqua.withValues(alpha: 0.18)
+                              : AppColors.primaryAqua.withValues(alpha: 0.12))
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     child: Icon(
                       isSelected ? activeIcon : icon,
                       color: color,
-                      size: 22,
+                      size: 21,
                     ),
                   ),
-                ),
-                if (badgeCount > 0)
-                  Positioned(
-                    top: -2,
-                    right: 4,
-                    child: TweenAnimationBuilder<double>(
-                      tween: Tween<double>(begin: 0.8, end: 1.0),
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.elasticOut,
-                      builder: (context, scale, child) {
-                        return Transform.scale(
-                          scale: scale,
-                          child: child,
-                        );
-                      },
+                  if (badgeCount > 0)
+                    Positioned(
+                      top: -3,
+                      right: 4,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                        padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 1),
                         decoration: BoxDecoration(
                           color: AppColors.statusAttention,
                           borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isDark ? AppColors.darkCardBackground : Colors.white,
+                            width: 1.5,
+                          ),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.statusAttention.withValues(alpha: 0.4),
+                              color: AppColors.statusAttention.withValues(alpha: 0.35),
                               blurRadius: 4,
                               offset: const Offset(0, 1),
                             ),
@@ -175,29 +158,31 @@ class CustomBottomNav extends ConsumerWidget {
                           badgeCount > 9 ? '9+' : '$badgeCount',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            height: 1.1,
                           ),
                           textAlign: TextAlign.center,
                         ),
                       ),
                     ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 3),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOut,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: color,
+                ],
               ),
-              child: Text(label),
-            ),
-          ],
+              const SizedBox(height: 2),
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  letterSpacing: 0.05,
+                  color: color,
+                  fontFamilyFallback: AppTypography.fontFallbacks,
+                ),
+                child: Text(label),
+              ),
+            ],
+          ),
         ),
       ),
     );
