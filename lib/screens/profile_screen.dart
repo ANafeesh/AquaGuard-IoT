@@ -186,7 +186,7 @@ class ProfileScreen extends ConsumerWidget {
                             ? 'Guest Observer (Read-only)'
                             : (user?.email ?? 'user@example.com'),
                         style: (isDark ? AppTypography.darkSecondary : AppTypography.secondary).copyWith(
-                          color: isDark ? AppColors.darkMutedText : AppColors.secondaryText,
+                          color: isDark ? AppColors.darkSecondaryText : AppColors.secondaryText,
                         ),
                       ),
                       const SizedBox(height: 12),

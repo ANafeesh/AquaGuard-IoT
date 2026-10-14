@@ -24,6 +24,7 @@ class AppConfig {
   static const String measurementsCollection = 'measurements';
   static const String devicesCollection = 'devices';
   static const String alertsCollection = 'alerts';
+  static const String observationsCollection = 'observations';
 
   /// Demo collection prefix for separating test demo data from production
   static const String demoPrefix = 'demo_';
@@ -40,4 +41,7 @@ class AppConfig {
 
   static String getAlertsCollection({bool isDemo = false}) =>
       isDemo ? '$demoPrefix$alertsCollection' : alertsCollection;
+
+  static String getObservationsCollection({bool isDemo = false}) =>
+      isDemo ? '$demoPrefix$observationsCollection' : observationsCollection;
 }

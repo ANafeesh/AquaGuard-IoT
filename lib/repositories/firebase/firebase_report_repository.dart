@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../core/config/app_config.dart';
 import '../../models/community_observation.dart';
 import '../report_repository.dart';
 
@@ -6,7 +7,7 @@ class FirebaseReportRepository implements ReportRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> get _collection =>
-      _firestore.collection('observations');
+      _firestore.collection(AppConfig.observationsCollection);
 
   @override
   Stream<List<CommunityObservation>> watchObservations() {

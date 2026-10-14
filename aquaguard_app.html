@@ -1,0 +1,2343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>AquaGuard - Water Quality IoT Monitoring</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <!-- Leaflet CSS for map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <style>
+    :root {
+      --primary-deep-ocean: #0369A1;
+      --primary-aqua: #0EA5E9;
+      --teal: #0D9488;
+      --emerald: #059669;
+      --light-aqua: #E0F2FE;
+      --dark-ocean-navy: #0B192C;
+      
+      --bg-main: #F8FAFC;
+      --bg-card: #FFFFFF;
+      --bg-card-subtle: #F1F5F9;
+      --border-color: #E2E8F0;
+      
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-muted: #94A3B8;
+      
+      --status-normal: #0D9488;
+      --status-normal-bg: #CCFBF1;
+      --status-normal-text: #0F766E;
+      
+      --status-warning: #D97706;
+      --status-warning-bg: #FEF3C7;
+      --status-warning-text: #92400E;
+      
+      --status-attention: #E11D48;
+      --status-attention-bg: #FFE4E6;
+      --status-attention-text: #9F1239;
+      
+      --status-neutral: #64748B;
+      --status-neutral-bg: #F1F5F9;
+      
+      --nav-height: 68px;
+      --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    [data-theme="dark"] {
+      --bg-main: #0F172A;
+      --bg-card: #1E293B;
+      --bg-card-subtle: #334155;
+      --border-color: #334155;
+      
+      --text-primary: #F8FAFC;
+      --text-secondary: #CBD5E1;
+      --text-muted: #64748B;
+      
+      --status-normal-bg: #134E4A;
+      --status-normal-text: #5EEAD4;
+      
+      --status-warning-bg: #78350F;
+      --status-warning-text: #FDE68A;
+      
+      --status-attention-bg: #881337;
+      --status-attention-text: #FDA4AF;
+      
+      --status-neutral-bg: #1E293B;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      transition: background-color 0.25s ease, color 0.25s ease;
+      overflow-x: hidden;
+    }
+
+    /* App Frame (Mobile-optimized container with max-width for desktop) */
+    #app-container {
+      width: 100%;
+      max-width: 480px;
+      min-height: 100vh;
+      background: var(--bg-main);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 0 40px rgba(0,0,0,0.08);
+      padding-bottom: calc(var(--nav-height) + 16px);
+    }
+
+    @media (min-width: 481px) {
+      body {
+        background-color: #0B192C;
+        padding: 16px 0;
+      }
+      #app-container {
+        border-radius: 28px;
+        overflow: hidden;
+        min-height: calc(100vh - 32px);
+        max-height: 940px;
+        height: calc(100vh - 32px);
+        border: 4px solid #1E293B;
+      }
+    }
+
+    /* Scrollable View Container */
+    .screen-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      display: none;
+    }
+
+    .screen-content.active {
+      display: block;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Top Banners */
+    .banner-offline {
+      background: #FFFBEB;
+      border-bottom: 1px solid #FDE68A;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #92400E;
+    }
+    [data-theme="dark"] .banner-offline {
+      background: #78350F;
+      border-bottom: 1px solid #92400E;
+      color: #FEF3C7;
+    }
+
+    .banner-demo {
+      background: #CCFBF1;
+      border-bottom: 1px solid var(--teal);
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #0F766E;
+    }
+    [data-theme="dark"] .banner-demo {
+      background: #134E4A;
+      color: #5EEAD4;
+    }
+
+    /* Disclaimer Notice Banner */
+    .disclaimer-card {
+      background: rgba(3, 105, 161, 0.06);
+      border: 1px solid rgba(14, 165, 233, 0.25);
+      border-radius: 12px;
+      padding: 9px 12px;
+      margin: 8px 16px 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    [data-theme="dark"] .disclaimer-card {
+      background: rgba(14, 165, 233, 0.1);
+      border-color: rgba(14, 165, 233, 0.3);
+    }
+    .disclaimer-text {
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.35;
+    }
+
+    /* App Header */
+    .header-bar {
+      padding: 14px 16px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header-greeting {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .header-title {
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
+    .header-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary-deep-ocean), var(--primary-aqua));
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      border: 2px solid rgba(14, 165, 233, 0.4);
+      transition: transform 0.15s ease;
+    }
+    .header-avatar:active {
+      transform: scale(0.94);
+    }
+
+    /* Summary Metrics Row (3 cards) */
+    .summary-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 4px 16px 14px;
+    }
+    .summary-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .summary-card:active {
+      transform: scale(0.97);
+    }
+    .summary-card-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 6px;
+    }
+    .summary-card-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .summary-card-val {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+    .summary-card-sub {
+      font-size: 10px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* Section Headers */
+    .section-header {
+      padding: 10px 18px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+    .section-action {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary-aqua);
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    /* Horizontal Sources Scroller */
+    .sources-scroll {
+      display: flex;
+      gap: 12px;
+      padding: 4px 16px 16px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+    }
+    .sources-scroll::-webkit-scrollbar {
+      display: none;
+    }
+    .source-summary-card {
+      min-width: 215px;
+      max-width: 215px;
+      scroll-snap-align: start;
+      background: var(--bg-card);
+      border: 1.5px solid var(--border-color);
+      border-radius: 18px;
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .source-summary-card.active-source {
+      border-color: var(--primary-aqua);
+      box-shadow: 0 4px 14px rgba(14, 165, 233, 0.15);
+      background: linear-gradient(180deg, var(--bg-card), var(--bg-card-subtle));
+    }
+    .source-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .source-type-pill {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: var(--bg-card-subtle);
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .status-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .status-badge.normal {
+      background: var(--status-normal-bg);
+      color: var(--status-normal-text);
+    }
+    .status-badge.unusual {
+      background: var(--status-warning-bg);
+      color: var(--status-warning-text);
+    }
+    .status-badge.attention {
+      background: var(--status-attention-bg);
+      color: var(--status-attention-text);
+    }
+    .source-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .source-metrics-mini {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px 10px;
+      font-size: 11.5px;
+    }
+    .source-metrics-mini span {
+      color: var(--text-muted);
+    }
+    .source-metrics-mini strong {
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* 2x2 Measurements Grid */
+    .measurements-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      padding: 4px 16px 16px;
+    }
+    .param-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 13px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 120px;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    .param-card:active {
+      transform: scale(0.97);
+    }
+    .param-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .param-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .param-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+      background: rgba(14, 165, 233, 0.1);
+      color: var(--primary-aqua);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+    .param-value-container {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+    .param-val {
+      font-size: 22px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-primary);
+    }
+    .param-unit {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .param-baseline {
+      font-size: 10px;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* pH Chart Box */
+    .chart-box {
+      margin: 4px 16px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      padding: 14px;
+    }
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .chart-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .chart-range-pills {
+      display: flex;
+      background: var(--bg-card-subtle);
+      border-radius: 8px;
+      padding: 2px;
+    }
+    .chart-pill {
+      border: none;
+      background: transparent;
+      padding: 3px 8px;
+      font-size: 10.5px;
+      font-weight: 700;
+      border-radius: 6px;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+    .chart-pill.active {
+      background: var(--bg-card);
+      color: var(--primary-deep-ocean);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+    [data-theme="dark"] .chart-pill.active {
+      background: #334155;
+      color: #38BDF8;
+    }
+
+    /* Alert Card */
+    .alert-card-ui {
+      background: var(--bg-card);
+      border-left: 4px solid var(--status-warning);
+      border-top: 1px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin: 4px 16px 16px;
+      cursor: pointer;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      transition: transform 0.15s ease;
+    }
+    .alert-card-ui:active {
+      transform: scale(0.98);
+    }
+    .alert-icon-wrap {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: var(--status-warning-bg);
+      color: var(--status-warning-text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .alert-card-content {
+      flex: 1;
+    }
+    .alert-card-topline {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 3px;
+    }
+    .alert-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .alert-card-time {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .alert-card-msg {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      line-height: 1.35;
+    }
+
+    /* Quick Action Buttons Grid */
+    .quick-actions-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      padding: 4px 16px 20px;
+    }
+    .quick-action-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 12px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-family: var(--font-family);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      transition: all 0.15s ease;
+    }
+    .quick-action-btn:active {
+      transform: scale(0.94);
+      background: var(--bg-card-subtle);
+    }
+    .quick-action-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: rgba(14, 165, 233, 0.1);
+      color: var(--primary-deep-ocean);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    [data-theme="dark"] .quick-action-icon {
+      color: #38BDF8;
+      background: rgba(14, 165, 233, 0.15);
+    }
+
+    /* Bottom Navigation Bar */
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: var(--nav-height);
+      background: var(--bg-card);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 50;
+      box-shadow: 0 -4px 16px rgba(0,0,0,0.03);
+    }
+    .nav-item {
+      flex: 1;
+      height: 100%;
+      border: none;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: color 0.15s ease;
+      font-family: var(--font-family);
+    }
+    .nav-item.active {
+      color: var(--primary-aqua);
+    }
+    .nav-item-icon {
+      font-size: 20px;
+      position: relative;
+    }
+    .nav-item-label {
+      font-size: 10.5px;
+      font-weight: 600;
+    }
+    .nav-badge-dot {
+      position: absolute;
+      top: -2px;
+      right: -4px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--status-attention);
+      border: 1.5px solid var(--bg-card);
+    }
+
+    /* SCREEN 2: MAP */
+    #screen-map {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .map-header {
+      padding: 12px 16px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 10;
+    }
+    .map-search-input {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card-subtle);
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: var(--font-family);
+      outline: none;
+    }
+    .map-filters {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+    }
+    .map-chip {
+      padding: 4px 10px;
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .map-chip.active {
+      background: var(--primary-deep-ocean);
+      color: #fff;
+      border-color: var(--primary-deep-ocean);
+    }
+    #leaflet-map {
+      flex: 1;
+      width: 100%;
+      min-height: 480px;
+      background: #E2E8F0;
+    }
+
+    /* SCREEN 3: ALERTS */
+    .alerts-filter-bar {
+      padding: 10px 16px;
+      display: flex;
+      gap: 8px;
+    }
+    .filter-tab {
+      padding: 6px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+    .filter-tab.active {
+      background: var(--primary-aqua);
+      color: #fff;
+      border-color: var(--primary-aqua);
+    }
+
+    /* SCREEN 4: COMMUNITY */
+    .community-feed {
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .feed-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 14px;
+    }
+    .feed-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .feed-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #0369A1;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .feed-author {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .feed-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .feed-body {
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      margin-bottom: 10px;
+    }
+    .feed-measurements {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .feed-pill {
+      background: var(--bg-card-subtle);
+      border-radius: 6px;
+      padding: 3px 7px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .feed-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 8px;
+      border-top: 1px solid var(--border-color);
+    }
+    .helpful-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      font-family: var(--font-family);
+      font-weight: 600;
+    }
+    .helpful-btn.liked {
+      color: var(--teal);
+    }
+
+    .fab-btn {
+      position: absolute;
+      bottom: calc(var(--nav-height) + 16px);
+      right: 18px;
+      background: var(--primary-deep-ocean);
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 10px 18px;
+      font-size: 12.5px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(3, 105, 161, 0.4);
+      z-index: 40;
+    }
+
+    /* SCREEN 5: SETTINGS */
+    .settings-list {
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .settings-section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .settings-header-label {
+      padding: 12px 16px 6px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+    }
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-color);
+      cursor: pointer;
+    }
+    .settings-row:last-child {
+      border-bottom: none;
+    }
+    .settings-row-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .settings-row-icon {
+      font-size: 18px;
+      color: var(--primary-aqua);
+    }
+    .settings-row-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .settings-row-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Toggle Switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: var(--border-color);
+      transition: .25s;
+      border-radius: 24px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .25s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: var(--primary-aqua);
+    }
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    /* Modal / Bottom Sheet Component */
+    .modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      display: none;
+      align-items: flex-end;
+      backdrop-filter: blur(2px);
+    }
+    .modal-overlay.open {
+      display: flex;
+      animation: fadeIn 0.2s ease;
+    }
+    .bottom-sheet {
+      width: 100%;
+      background: var(--bg-card);
+      border-radius: 24px 24px 0 0;
+      padding: 18px 20px 30px;
+      max-height: 85vh;
+      overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform 0.25s ease-out;
+    }
+    .modal-overlay.open .bottom-sheet {
+      transform: translateY(0);
+    }
+    .sheet-handle {
+      width: 36px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border-color);
+      margin: 0 auto 14px;
+    }
+    .sheet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .sheet-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+    .btn-close {
+      background: transparent;
+      border: none;
+      font-size: 20px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    /* Form Fields in Modal */
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-label {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: 5px;
+    }
+    .form-input, .form-textarea, .form-select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card-subtle);
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: var(--font-family);
+      outline: none;
+    }
+    .btn-submit {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      background: var(--primary-deep-ocean);
+      color: #fff;
+      border: none;
+      font-size: 13.5px;
+      font-weight: 700;
+      font-family: var(--font-family);
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .btn-submit:active {
+      transform: scale(0.98);
+    }
+
+    /* Toast Notification */
+    #toast-msg {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: var(--dark-ocean-navy);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+      z-index: 200;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #toast-msg.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body data-theme="light">
+
+  <div id="app-container">
+    <!-- Toast Popup -->
+    <div id="toast-msg">
+      <span id="toast-icon">✓</span>
+      <span id="toast-text">Success</span>
+    </div>
+
+    <!-- Demo Mode Banner (Simulated ESP32) -->
+    <div id="demo-banner" class="banner-demo">
+      <span>🔬</span>
+      <span>DEMO MODE ACTIVE: Live ESP32 simulation running every 10s</span>
+    </div>
+
+    <!-- Offline Banner (Toggleable) -->
+    <div id="offline-banner" class="banner-offline" style="display: none;">
+      <span>⚠️ Offline Mode Active (Cached Data)</span>
+      <span style="text-decoration: underline; cursor: pointer;" onclick="toggleOfflineMode()">Go Online</span>
+    </div>
+
+    <!-- SCREEN 1: HOME DASHBOARD -->
+    <main id="screen-home" class="screen-content active">
+      <div class="header-bar">
+        <div>
+          <div class="header-greeting">Welcome, Alex Rivera</div>
+          <div class="header-title">Water Quality Dashboard</div>
+        </div>
+        <div class="header-avatar" onclick="switchTab(4)" title="Profile & Settings">AR</div>
+      </div>
+
+      <div class="disclaimer-card">
+        <span style="font-size: 15px;">ℹ️</span>
+        <div class="disclaimer-text">
+          AquaGuard monitors ambient baseline water parameters for community awareness. It is not a certified drinking-water safety guarantee.
+        </div>
+      </div>
+
+      <!-- Quick Summary Metrics (3 cards) -->
+      <div class="summary-row">
+        <div class="summary-card" onclick="switchTab(1)">
+          <div class="summary-card-icon" style="background: rgba(14, 165, 233, 0.12); color: var(--primary-aqua);">💧</div>
+          <div class="summary-card-title">Sources</div>
+          <div class="summary-card-val" id="summary-sources-count">4</div>
+          <div class="summary-card-sub">Monitored</div>
+        </div>
+        <div class="summary-card" onclick="switchTab(2)">
+          <div class="summary-card-icon" style="background: rgba(217, 119, 6, 0.12); color: var(--status-warning);">🔔</div>
+          <div class="summary-card-title">Alerts</div>
+          <div class="summary-card-val" id="summary-alerts-count">1</div>
+          <div class="summary-card-sub" style="color: var(--status-warning);">1 Anomaly</div>
+        </div>
+        <div class="summary-card" onclick="switchTab(3)">
+          <div class="summary-card-icon" style="background: rgba(3, 105, 161, 0.12); color: var(--primary-deep-ocean);">👥</div>
+          <div class="summary-card-title">Community</div>
+          <div class="summary-card-val">18</div>
+          <div class="summary-card-sub">This week</div>
+        </div>
+      </div>
+
+      <!-- Horizontal Scrollable Sources -->
+      <div class="section-header">
+        <div class="section-title">Monitored Water Sources</div>
+        <span class="section-action" onclick="openAddSourceModal()">+ Add Source</span>
+      </div>
+      <div class="sources-scroll" id="sources-list-container">
+        <!-- Rendered via JS -->
+      </div>
+
+      <!-- Current Selected Source Detailed 2x2 Grid -->
+      <div class="section-header">
+        <div>
+          <div class="section-title" id="active-source-name-title">Lake View Point Measurements</div>
+          <div style="font-size: 11px; color: var(--text-muted);" id="active-source-updated">Updated 3m ago</div>
+        </div>
+        <span class="section-action" onclick="openDetailsModal()">View Details &rarr;</span>
+      </div>
+
+      <div class="measurements-grid" id="measurements-grid-container">
+        <!-- Rendered via JS -->
+      </div>
+
+      <!-- Historical pH Trend Chart -->
+      <div class="chart-box">
+        <div class="chart-header">
+          <div class="chart-title">pH Indicator Trend</div>
+          <div class="chart-range-pills">
+            <button class="chart-pill active" onclick="setChartRange('24h')">24H</button>
+            <button class="chart-pill" onclick="setChartRange('7d')">7D</button>
+            <button class="chart-pill" onclick="setChartRange('30d')">30D</button>
+          </div>
+        </div>
+        <div style="position: relative; height: 180px; width: 100%;">
+          <canvas id="phChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Recent Alert Card -->
+      <div class="section-header">
+        <div class="section-title">Recent Anomaly Alert</div>
+        <span class="section-action" onclick="switchTab(2)">All Alerts</span>
+      </div>
+      <div id="home-alert-container">
+        <!-- Rendered via JS -->
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="section-header">
+        <div class="section-title">Quick Actions</div>
+      </div>
+      <div class="quick-actions-grid">
+        <button class="quick-action-btn" onclick="switchTab(1)">
+          <div class="quick-action-icon">🗺️</div>
+          <span>View Map</span>
+        </button>
+        <button class="quick-action-btn" onclick="openAddReadingModal()">
+          <div class="quick-action-icon">➕</div>
+          <span>Add Reading</span>
+        </button>
+        <button class="quick-action-btn" onclick="showToast('Historical trends loaded')">
+          <div class="quick-action-icon">📈</div>
+          <span>Graphs</span>
+        </button>
+        <button class="quick-action-btn" onclick="switchTab(3)">
+          <div class="quick-action-icon">🤝</div>
+          <span>Community</span>
+        </button>
+      </div>
+    </main>
+
+    <!-- SCREEN 2: MAP -->
+    <section id="screen-map" class="screen-content">
+      <div class="map-header">
+        <input type="text" id="map-search" class="map-search-input" placeholder="Search water sources or locations..." oninput="handleMapSearch(this.value)" />
+        <div class="map-filters">
+          <button class="map-chip active" onclick="filterMapSources('All', this)">All (4)</button>
+          <button class="map-chip" onclick="filterMapSources('Typical', this)">Typical (3)</button>
+          <button class="map-chip" onclick="filterMapSources('Unusual', this)">Unusual (1)</button>
+        </div>
+      </div>
+      <div id="leaflet-map"></div>
+    </section>
+
+    <!-- SCREEN 3: ALERTS -->
+    <section id="screen-alerts" class="screen-content">
+      <div class="header-bar">
+        <div>
+          <div class="header-greeting">Notifications</div>
+          <div class="header-title">Anomaly Alerts</div>
+        </div>
+      </div>
+      <div class="alerts-filter-bar">
+        <button class="filter-tab active" onclick="filterAlerts('All', this)">All</button>
+        <button class="filter-tab" onclick="filterAlerts('Unack', this)">Unacknowledged</button>
+      </div>
+      <div id="alerts-list-container" style="padding: 4px 0 20px;">
+        <!-- Rendered via JS -->
+      </div>
+    </section>
+
+    <!-- SCREEN 4: COMMUNITY -->
+    <section id="screen-community" class="screen-content">
+      <div class="header-bar">
+        <div>
+          <div class="header-greeting">Field Observations</div>
+          <div class="header-title">Community Feed</div>
+        </div>
+      </div>
+      <div class="community-feed" id="community-feed-container">
+        <!-- Rendered via JS -->
+      </div>
+      <button class="fab-btn" onclick="openShareObservationModal()">
+        <span>+</span>
+        <span>Share Observation</span>
+      </button>
+    </section>
+
+    <!-- SCREEN 5: SETTINGS / PROFILE -->
+    <section id="screen-settings" class="screen-content">
+      <div class="header-bar">
+        <div>
+          <div class="header-greeting">Preferences & Sync</div>
+          <div class="header-title">Settings</div>
+        </div>
+      </div>
+
+      <div class="settings-list">
+        <!-- User Profile Card -->
+        <div class="settings-section-card" style="padding: 16px; display: flex; align-items: center; gap: 14px;">
+          <div class="header-avatar" style="width: 48px; height: 48px; font-size: 16px;">AR</div>
+          <div style="flex: 1;">
+            <div style="font-size: 15px; font-weight: 800; color: var(--text-primary);">Alex Rivera</div>
+            <div style="font-size: 12px; color: var(--text-muted);">alex.rivera@aquaguard.io • Community Lead</div>
+          </div>
+          <button class="map-chip" onclick="showToast('Profile saved')">Edit</button>
+        </div>
+
+        <!-- Appearance Section -->
+        <div class="settings-section-card">
+          <div class="settings-header-label">Appearance</div>
+          <div class="settings-row">
+            <div class="settings-row-left">
+              <span class="settings-row-icon">🌙</span>
+              <div>
+                <div class="settings-row-title">Dark Mode</div>
+                <div class="settings-row-sub">Sleek slate dark interface</div>
+              </div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="theme-toggle" onchange="toggleDarkMode(this.checked)">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Network & Simulation -->
+        <div class="settings-section-card">
+          <div class="settings-header-label">Data & Sensors</div>
+          <div class="settings-row">
+            <div class="settings-row-left">
+              <span class="settings-row-icon">📡</span>
+              <div>
+                <div class="settings-row-title">Live ESP32 Simulation</div>
+                <div class="settings-row-sub">Periodic sensor readings every 10s</div>
+              </div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="demo-toggle" checked onchange="toggleDemoMode(this.checked)">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-left">
+              <span class="settings-row-icon">📶</span>
+              <div>
+                <div class="settings-row-title">Simulate Offline Mode</div>
+                <div class="settings-row-sub">Test cached UI behavior</div>
+              </div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="offline-toggle" onchange="toggleOfflineMode(this.checked)">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Firebase & Cloud Tools -->
+        <div class="settings-section-card">
+          <div class="settings-header-label">Cloud Database Tools</div>
+          <div class="settings-row" onclick="triggerSeedData()">
+            <div class="settings-row-left">
+              <span class="settings-row-icon">☁️</span>
+              <div>
+                <div class="settings-row-title">Reset & Seed Sample Data</div>
+                <div class="settings-row-sub">4 sources, 7-day readings, anomaly alerts</div>
+              </div>
+            </div>
+            <span style="font-size: 13px; color: var(--primary-aqua); font-weight: 700;">Run &rarr;</span>
+          </div>
+        </div>
+
+        <!-- App Info -->
+        <div class="settings-section-card">
+          <div class="settings-header-label">About AquaGuard</div>
+          <div class="settings-row">
+            <div class="settings-row-left">
+              <span class="settings-row-icon">ℹ️</span>
+              <div>
+                <div class="settings-row-title">Version</div>
+                <div class="settings-row-sub">v2.4.0 (Build 2026.10)</div>
+              </div>
+            </div>
+          </div>
+          <div class="settings-row" onclick="showToast('AquaGuard IoT v2.4.0 - Clean Water Initiative')">
+            <div class="settings-row-left">
+              <span class="settings-row-icon">🛡️</span>
+              <div>
+                <div class="settings-row-title">Regulatory & Non-potable Disclaimer</div>
+                <div class="settings-row-sub">Click to review safety standards</div>
+              </div>
+            </div>
+            <span style="font-size: 14px; color: var(--text-muted);">&rarr;</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom Navigation Bar (5 tabs) -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" onclick="switchTab(0)">
+        <span class="nav-item-icon">🏠</span>
+        <span class="nav-item-label">Home</span>
+      </button>
+      <button class="nav-item" onclick="switchTab(1)">
+        <span class="nav-item-icon">🗺️</span>
+        <span class="nav-item-label">Map</span>
+      </button>
+      <button class="nav-item" onclick="switchTab(2)">
+        <span class="nav-item-icon">
+          🔔
+          <span class="nav-badge-dot" id="nav-alert-badge"></span>
+        </span>
+        <span class="nav-item-label">Alerts</span>
+      </button>
+      <button class="nav-item" onclick="switchTab(3)">
+        <span class="nav-item-icon">👥</span>
+        <span class="nav-item-label">Community</span>
+      </button>
+      <button class="nav-item" onclick="switchTab(4)">
+        <span class="nav-item-icon">⚙️</span>
+        <span class="nav-item-label">Settings</span>
+      </button>
+    </nav>
+
+    <!-- MODAL 1: ADD READING / OBSERVATION -->
+    <div id="modal-reading" class="modal-overlay" onclick="handleOverlayClick(event, 'modal-reading')">
+      <div class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <div class="sheet-title">Report Water Measurement</div>
+          <button class="btn-close" onclick="closeModal('modal-reading')">&times;</button>
+        </div>
+        <form onsubmit="handleNewReading(event)">
+          <div class="form-group">
+            <label class="form-label">Water Source</label>
+            <select class="form-select" id="field-source-id">
+              <!-- populated dynamically -->
+            </select>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+              <label class="form-label">pH Level (0 - 14)</label>
+              <input type="number" step="0.01" class="form-input" id="field-ph" placeholder="e.g. 7.2" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">TDS (mg/L)</label>
+              <input type="number" step="1" class="form-input" id="field-tds" placeholder="e.g. 320" required />
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+              <label class="form-label">Turbidity (NTU)</label>
+              <input type="number" step="0.1" class="form-input" id="field-turb" placeholder="e.g. 3.4" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Temperature (°C)</label>
+              <input type="number" step="0.1" class="form-input" id="field-temp" placeholder="e.g. 28.2" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Field Notes / Observations</label>
+            <textarea class="form-textarea" id="field-notes" rows="2" placeholder="Clear water, slight overcast weather, etc."></textarea>
+          </div>
+          <button type="submit" class="btn-submit">Submit Telemetry Reading</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL 2: ADD WATER SOURCE -->
+    <div id="modal-add-source" class="modal-overlay" onclick="handleOverlayClick(event, 'modal-add-source')">
+      <div class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <div class="sheet-title">Add Monitored Water Source</div>
+          <button class="btn-close" onclick="closeModal('modal-add-source')">&times;</button>
+        </div>
+        <form onsubmit="handleNewSource(event)">
+          <div class="form-group">
+            <label class="form-label">Source Name</label>
+            <input type="text" class="form-input" id="new-src-name" placeholder="e.g. South Creek Basin" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Water Source Type</label>
+            <select class="form-select" id="new-src-type">
+              <option value="lake">Lake</option>
+              <option value="river">River</option>
+              <option value="well">Groundwater Well</option>
+              <option value="reservoir">Reservoir</option>
+            </select>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+              <label class="form-label">Latitude</label>
+              <input type="number" step="0.0001" class="form-input" id="new-src-lat" value="6.9320" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Longitude</label>
+              <input type="number" step="0.0001" class="form-input" id="new-src-lng" value="79.8580" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea class="form-textarea" id="new-src-desc" rows="2" placeholder="Monitoring point near settlement..."></textarea>
+          </div>
+          <button type="submit" class="btn-submit">Save Water Source</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL 3: ALERT DETAIL -->
+    <div id="modal-alert-detail" class="modal-overlay" onclick="handleOverlayClick(event, 'modal-alert-detail')">
+      <div class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <div class="sheet-title">Anomaly Alert Details</div>
+          <button class="btn-close" onclick="closeModal('modal-alert-detail')">&times;</button>
+        </div>
+        <div id="alert-detail-content">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 4: WATER SOURCE DETAIL -->
+    <div id="modal-source-detail" class="modal-overlay" onclick="handleOverlayClick(event, 'modal-source-detail')">
+      <div class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <div class="sheet-title" id="source-detail-title">Water Source Overview</div>
+          <button class="btn-close" onclick="closeModal('modal-source-detail')">&times;</button>
+        </div>
+        <div id="source-detail-content">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ========================================================
+       DATA STORE (Mirrors Flutter Firebase & App Models)
+       ======================================================== */
+    let waterSources = [
+      {
+        id: 'src_lake_01',
+        name: 'Lake View Point',
+        type: 'lake',
+        lat: 6.9271,
+        lng: 79.8612,
+        ph: 7.25,
+        tds: 320,
+        turbidity: 3.4,
+        temperature: 28.2,
+        status: 'withinTypicalRange',
+        statusLabel: 'Within Typical Range',
+        lastUpdated: '3m ago',
+        description: 'Primary community freshwater lake monitored for ambient aquatic indicators.'
+      },
+      {
+        id: 'src_river_02',
+        name: 'Riverside Reach Station',
+        type: 'river',
+        lat: 6.9380,
+        lng: 79.8720,
+        ph: 6.90,
+        tds: 410,
+        turbidity: 16.5, // Anomaly spike
+        temperature: 29.1,
+        status: 'unusual',
+        statusLabel: 'Unusual',
+        lastUpdated: '8m ago',
+        description: 'Slow-flowing river tributary downstream from seasonal runoff channels.'
+      },
+      {
+        id: 'src_well_03',
+        name: 'Community Groundwater Well',
+        type: 'well',
+        lat: 6.9150,
+        lng: 79.8550,
+        ph: 6.50,
+        tds: 460,
+        turbidity: 2.1,
+        temperature: 26.8,
+        status: 'withinTypicalRange',
+        statusLabel: 'Within Typical Range',
+        lastUpdated: '25m ago',
+        description: 'Deep groundwater community borehole for ambient environmental monitoring.'
+      },
+      {
+        id: 'src_res_04',
+        name: 'North Reservoir Basin',
+        type: 'reservoir',
+        lat: 6.9450,
+        lng: 79.8650,
+        ph: 7.40,
+        tds: 285,
+        turbidity: 1.8,
+        temperature: 27.0,
+        status: 'withinTypicalRange',
+        statusLabel: 'Within Typical Range',
+        lastUpdated: '5m ago',
+        description: 'Protected catchment basin supplying regional environmental monitoring.'
+      }
+    ];
+
+    let alerts = [
+      {
+        id: 'alt_spike_river_01',
+        sourceId: 'src_river_02',
+        sourceName: 'Riverside Reach Station',
+        parameter: 'Turbidity',
+        value: '16.5 NTU',
+        timeAgo: '18m ago',
+        severity: 'unusual',
+        acknowledged: false,
+        message: 'Unusual turbidity measurement detected at Riverside Reach Station.',
+        advice: 'Turbidity exceeds typical seasonal baseline (Below 5.0 NTU). Check filter intake and upstream sediment.'
+      },
+      {
+        id: 'alt_ph_well_02',
+        sourceId: 'src_well_03',
+        sourceName: 'Community Groundwater Well',
+        parameter: 'pH Level',
+        value: '6.42 pH',
+        timeAgo: '3h ago',
+        severity: 'unusual',
+        acknowledged: true,
+        message: 'Slightly acidic reading outside typical seasonal baseline.',
+        advice: 'Slightly acidic reading outside typical baseline (6.5 – 8.5). Recommend secondary sample testing.'
+      }
+    ];
+
+    let observations = [
+      {
+        id: 'obs_1',
+        author: 'Elena Rostova',
+        avatar: 'ER',
+        location: 'North Deck Jetty • Lake View Point',
+        timeAgo: '15m ago',
+        notes: 'Water appears calm and remarkably clear today. No surface algae or floating debris noted.',
+        ph: 7.25,
+        tds: 318,
+        turbidity: 3.2,
+        temperature: 28.0,
+        status: 'withinTypicalRange',
+        helpful: 5,
+        liked: false
+      },
+      {
+        id: 'obs_2',
+        author: 'Marcus Chen',
+        avatar: 'MC',
+        location: 'East Bridge Outflow • Riverside Reach Station',
+        timeAgo: '1h ago',
+        notes: 'High silt disturbance observed following morning upstream rain. Moderate murky tint with suspended sediment.',
+        ph: 6.90,
+        tds: 412,
+        turbidity: 7.8,
+        temperature: 28.8,
+        status: 'unusual',
+        helpful: 3,
+        liked: false
+      },
+      {
+        id: 'obs_3',
+        author: 'Dr. Sarah Al-Mansoor',
+        avatar: 'SA',
+        location: 'Groundwater Borehole #2 • Community Well',
+        timeAgo: '4h ago',
+        notes: 'Quarterly sensor calibration completed. Electrodes rinsed with deionized solution; baseline confirmed steady.',
+        ph: 6.55,
+        tds: 458,
+        turbidity: 2.0,
+        temperature: 26.9,
+        status: 'withinTypicalRange',
+        helpful: 12,
+        liked: true
+      }
+    ];
+
+    let currentSourceId = 'src_lake_01';
+    let activeTab = 0;
+    let phChart = null;
+    let leafletMap = null;
+    let mapMarkers = [];
+    let isOffline = false;
+    let isDemoMode = true;
+    let demoInterval = null;
+
+    /* ========================================================
+       CORE INITIALIZATION
+       ======================================================== */
+    document.addEventListener('DOMContentLoaded', () => {
+      renderSourcesScroll();
+      renderActiveSourceMetrics();
+      renderHomeAlert();
+      renderAlertsList('All');
+      renderCommunityFeed();
+      initChart();
+      initDemoSimulation();
+      updateAlertBadge();
+    });
+
+    /* ========================================================
+       NAVIGATION & TABS
+       ======================================================== */
+    function switchTab(index) {
+      activeTab = index;
+      const screens = [
+        'screen-home',
+        'screen-map',
+        'screen-alerts',
+        'screen-community',
+        'screen-settings'
+      ];
+
+      screens.forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (el) {
+          if (i === index) {
+            el.classList.add('active');
+          } else {
+            el.classList.remove('active');
+          }
+        }
+      });
+
+      // Update Nav Buttons
+      const navButtons = document.querySelectorAll('.bottom-nav .nav-item');
+      navButtons.forEach((btn, i) => {
+        if (i === index) btn.classList.add('active');
+        else btn.classList.remove('active');
+      });
+
+      // Special Tab triggers
+      if (index === 1) {
+        setTimeout(initMapIfNeeded, 100);
+      }
+    }
+
+    /* ========================================================
+       RENDER FUNCTIONS
+       ======================================================== */
+    function renderSourcesScroll() {
+      const container = document.getElementById('sources-list-container');
+      const selectField = document.getElementById('field-source-id');
+      
+      container.innerHTML = '';
+      selectField.innerHTML = '';
+
+      waterSources.forEach(src => {
+        const isSelected = src.id === currentSourceId;
+        const statusClass = src.status === 'withinTypicalRange' ? 'normal' : 'unusual';
+        
+        // Horizontal Card
+        const card = document.createElement('div');
+        card.className = `source-summary-card ${isSelected ? 'active-source' : ''}`;
+        card.onclick = () => selectSource(src.id);
+        card.innerHTML = `
+          <div class="source-card-top">
+            <span class="source-type-pill">${src.type}</span>
+            <span class="status-badge ${statusClass}">
+              <span>●</span> ${src.status === 'withinTypicalRange' ? 'Typical' : 'Unusual'}
+            </span>
+          </div>
+          <div class="source-name">${src.name}</div>
+          <div class="source-metrics-mini">
+            <div><span>pH: </span><strong>${src.ph.toFixed(2)}</strong></div>
+            <div><span>Turb: </span><strong>${src.turbidity.toFixed(1)}</strong></div>
+            <div><span>TDS: </span><strong>${src.tds}</strong></div>
+            <div><span>Temp: </span><strong>${src.temperature.toFixed(1)}°</strong></div>
+          </div>
+        `;
+        container.appendChild(card);
+
+        // Populate modal select
+        const opt = document.createElement('option');
+        opt.value = src.id;
+        opt.textContent = src.name;
+        selectField.appendChild(opt);
+      });
+
+      document.getElementById('summary-sources-count').textContent = waterSources.length;
+    }
+
+    function selectSource(id) {
+      currentSourceId = id;
+      renderSourcesScroll();
+      renderActiveSourceMetrics();
+      updateChartData();
+    }
+
+    function renderActiveSourceMetrics() {
+      const src = waterSources.find(s => s.id === currentSourceId) || waterSources[0];
+      if (!src) return;
+
+      document.getElementById('active-source-name-title').textContent = `${src.name} Measurements`;
+      document.getElementById('active-source-updated').textContent = `Updated ${src.lastUpdated}`;
+
+      const grid = document.getElementById('measurements-grid-container');
+      grid.innerHTML = `
+        <div class="param-card" onclick="openDetailsModal()">
+          <div class="param-card-top">
+            <span class="param-name">pH Level</span>
+            <span class="param-icon">⚗️</span>
+          </div>
+          <div class="param-value-container">
+            <span class="param-val">${src.ph.toFixed(2)}</span>
+            <span class="param-unit">pH</span>
+          </div>
+          <div class="param-baseline">
+            <span>Baseline 6.5 - 8.5</span>
+            <span style="color: ${src.ph >= 6.5 && src.ph <= 8.5 ? 'var(--teal)' : 'var(--status-warning)'}">
+              ${src.ph >= 6.5 && src.ph <= 8.5 ? 'Normal' : 'Out of range'}
+            </span>
+          </div>
+        </div>
+
+        <div class="param-card" onclick="openDetailsModal()">
+          <div class="param-card-top">
+            <span class="param-name">TDS / EC</span>
+            <span class="param-icon">⚡</span>
+          </div>
+          <div class="param-value-container">
+            <span class="param-val">${src.tds}</span>
+            <span class="param-unit">mg/L</span>
+          </div>
+          <div class="param-baseline">
+            <span>Typical &lt; 500</span>
+            <span style="color: var(--teal);">Typical</span>
+          </div>
+        </div>
+
+        <div class="param-card" onclick="openDetailsModal()">
+          <div class="param-card-top">
+            <span class="param-name">Turbidity</span>
+            <span class="param-icon">🌊</span>
+          </div>
+          <div class="param-value-container">
+            <span class="param-val">${src.turbidity.toFixed(1)}</span>
+            <span class="param-unit">NTU</span>
+          </div>
+          <div class="param-baseline">
+            <span>Baseline &lt; 5.0</span>
+            <span style="color: ${src.turbidity <= 5.0 ? 'var(--teal)' : 'var(--status-warning)'}">
+              ${src.turbidity <= 5.0 ? 'Clear' : 'Elevated'}
+            </span>
+          </div>
+        </div>
+
+        <div class="param-card" onclick="openDetailsModal()">
+          <div class="param-card-top">
+            <span class="param-name">Temperature</span>
+            <span class="param-icon">🌡️</span>
+          </div>
+          <div class="param-value-container">
+            <span class="param-val">${src.temperature.toFixed(1)}</span>
+            <span class="param-unit">°C</span>
+          </div>
+          <div class="param-baseline">
+            <span>Ambient 24 - 32</span>
+            <span style="color: var(--teal);">Ambient</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderHomeAlert() {
+      const container = document.getElementById('home-alert-container');
+      const unack = alerts.find(a => !a.acknowledged) || alerts[0];
+      if (!unack) {
+        container.innerHTML = '<div style="padding: 10px 16px; font-size: 12px; color: var(--teal);">✓ All anomaly alerts acknowledged</div>';
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="alert-card-ui" onclick="openAlertDetailModal('${unack.id}')">
+          <div class="alert-icon-wrap">⚠️</div>
+          <div class="alert-card-content">
+            <div class="alert-card-topline">
+              <span class="alert-card-title">Unusual ${unack.parameter}</span>
+              <span class="alert-card-time">${unack.timeAgo}</span>
+            </div>
+            <div class="alert-card-msg">${unack.message}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAlertsList(filter = 'All') {
+      const container = document.getElementById('alerts-list-container');
+      container.innerHTML = '';
+
+      let list = alerts;
+      if (filter === 'Unack') {
+        list = alerts.filter(a => !a.acknowledged);
+      }
+
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+            <div style="font-size: 36px; margin-bottom: 8px;">🔔</div>
+            <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">No Alerts Found</div>
+            <div style="font-size: 12px;">All readings are within typical baseline thresholds.</div>
+          </div>
+        `;
+        return;
+      }
+
+      list.forEach(a => {
+        const item = document.createElement('div');
+        item.className = 'alert-card-ui';
+        item.style.borderColor = a.acknowledged ? 'var(--border-color)' : 'var(--status-warning)';
+        item.onclick = () => openAlertDetailModal(a.id);
+        item.innerHTML = `
+          <div class="alert-icon-wrap" style="background: ${a.acknowledged ? 'var(--bg-card-subtle)' : 'var(--status-warning-bg)'}; color: ${a.acknowledged ? 'var(--text-muted)' : 'var(--status-warning-text)'};">
+            ${a.acknowledged ? '✓' : '⚠️'}
+          </div>
+          <div class="alert-card-content">
+            <div class="alert-card-topline">
+              <span class="alert-card-title">${a.parameter} Anomaly: ${a.value}</span>
+              <span class="alert-card-time">${a.timeAgo}</span>
+            </div>
+            <div style="font-size: 11px; color: var(--primary-aqua); font-weight: 600; margin-bottom: 3px;">${a.sourceName}</div>
+            <div class="alert-card-msg">${a.message}</div>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+
+      updateAlertBadge();
+    }
+
+    function renderCommunityFeed() {
+      const container = document.getElementById('community-feed-container');
+      container.innerHTML = '';
+
+      observations.forEach(obs => {
+        const item = document.createElement('div');
+        item.className = 'feed-card';
+        item.innerHTML = `
+          <div class="feed-header">
+            <div class="feed-avatar">${obs.avatar}</div>
+            <div style="flex: 1;">
+              <div class="feed-author">${obs.author}</div>
+              <div class="feed-meta">${obs.location} • ${obs.timeAgo}</div>
+            </div>
+            <span class="status-badge ${obs.status === 'withinTypicalRange' ? 'normal' : 'unusual'}">
+              ● ${obs.status === 'withinTypicalRange' ? 'Typical' : 'Unusual'}
+            </span>
+          </div>
+          <div class="feed-body">${obs.notes}</div>
+          <div class="feed-measurements">
+            <span class="feed-pill">pH ${obs.ph}</span>
+            <span class="feed-pill">TDS ${obs.tds}</span>
+            <span class="feed-pill">Turb ${obs.turbidity} NTU</span>
+            <span class="feed-pill">Temp ${obs.temperature}°C</span>
+          </div>
+          <div class="feed-footer">
+            <button class="helpful-btn ${obs.liked ? 'liked' : ''}" onclick="toggleLikeObservation('${obs.id}')">
+              <span>👍</span>
+              <span>Helpful (${obs.helpful})</span>
+            </button>
+            <span style="font-size: 11px; color: var(--text-muted);">Verified Reading</span>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function updateAlertBadge() {
+      const unackCount = alerts.filter(a => !a.acknowledged).length;
+      const badge = document.getElementById('nav-alert-badge');
+      const countEl = document.getElementById('summary-alerts-count');
+      if (countEl) countEl.textContent = unackCount;
+      if (badge) {
+        badge.style.display = unackCount > 0 ? 'block' : 'none';
+      }
+    }
+
+    /* ========================================================
+       CHART LOGIC (Chart.js)
+       ======================================================== */
+    function initChart() {
+      const ctx = document.getElementById('phChart').getContext('2d');
+      const isDark = document.body.getAttribute('data-theme') === 'dark';
+
+      const gradient = ctx.createLinearGradient(0, 0, 0, 180);
+      gradient.addColorStop(0, 'rgba(14, 165, 233, 0.3)');
+      gradient.addColorStop(1, 'rgba(14, 165, 233, 0.0)');
+
+      phChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', 'Now'],
+          datasets: [{
+            label: 'pH Level',
+            data: [7.20, 7.22, 7.18, 7.26, 7.30, 7.24, 7.25],
+            borderColor: '#0EA5E9',
+            backgroundColor: gradient,
+            borderWidth: 2.5,
+            pointBackgroundColor: '#0369A1',
+            pointRadius: 3,
+            fill: true,
+            tension: 0.35
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 9 }, color: isDark ? '#64748B' : '#94A3B8' }
+            },
+            y: {
+              min: 6.0,
+              max: 8.5,
+              grid: { color: isDark ? '#334155' : '#F1F5F9' },
+              ticks: { font: { size: 9 }, color: isDark ? '#64748B' : '#94A3B8' }
+            }
+          }
+        }
+      });
+    }
+
+    function setChartRange(range) {
+      document.querySelectorAll('.chart-pill').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      if (!phChart) return;
+
+      if (range === '24h') {
+        phChart.data.labels = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', 'Now'];
+        phChart.data.datasets[0].data = [7.20, 7.22, 7.18, 7.26, 7.30, 7.24, 7.25];
+      } else if (range === '7d') {
+        phChart.data.labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        phChart.data.datasets[0].data = [7.10, 7.15, 7.35, 7.22, 7.19, 7.28, 7.25];
+      } else {
+        phChart.data.labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+        phChart.data.datasets[0].data = [7.05, 7.18, 7.22, 7.25];
+      }
+      phChart.update();
+    }
+
+    function updateChartData() {
+      if (!phChart) return;
+      const src = waterSources.find(s => s.id === currentSourceId);
+      if (!src) return;
+      const base = src.ph;
+      phChart.data.datasets[0].data = [
+        +(base - 0.08).toFixed(2),
+        +(base - 0.04).toFixed(2),
+        +(base + 0.05).toFixed(2),
+        +(base - 0.02).toFixed(2),
+        +(base + 0.04).toFixed(2),
+        +(base - 0.01).toFixed(2),
+        +(base).toFixed(2)
+      ];
+      phChart.update();
+    }
+
+    /* ========================================================
+       LEAFLET MAP INTEGRATION
+       ======================================================== */
+    function initMapIfNeeded() {
+      if (leafletMap) {
+        leafletMap.invalidateSize();
+        return;
+      }
+
+      leafletMap = L.map('leaflet-map').setView([6.9320, 79.8620], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(leafletMap);
+
+      renderMapMarkers(waterSources);
+    }
+
+    function renderMapMarkers(sourcesToRender) {
+      if (!leafletMap) return;
+      mapMarkers.forEach(m => leafletMap.removeLayer(m));
+      mapMarkers = [];
+
+      sourcesToRender.forEach(src => {
+        const color = src.status === 'withinTypicalRange' ? '#0D9488' : '#D97706';
+        const markerHtml = `
+          <div style="background-color: ${color}; width: 28px; height: 28px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: bold;">
+            💧
+          </div>
+        `;
+
+        const customIcon = L.divIcon({
+          html: markerHtml,
+          className: 'custom-leaflet-marker',
+          iconSize: [28, 28],
+          iconAnchor: [14, 14]
+        });
+
+        const marker = L.marker([src.lat, src.lng], { icon: customIcon }).addTo(leafletMap);
+        marker.bindPopup(`
+          <div style="font-family: var(--font-family); padding: 4px;">
+            <strong style="font-size: 13px; color: #0F172A;">${src.name}</strong><br/>
+            <span style="font-size: 11px; color: ${color}; font-weight: bold;">● ${src.statusLabel}</span><br/>
+            <div style="font-size: 11px; margin-top: 4px;">
+              pH: <strong>${src.ph}</strong> | Turb: <strong>${src.turbidity} NTU</strong>
+            </div>
+            <button onclick="openSourceFromMap('${src.id}')" style="margin-top: 6px; background: #0369A1; color: white; border: none; border-radius: 6px; padding: 4px 8px; font-size: 10.5px; cursor: pointer; width: 100%;">View Full Telemetry</button>
+          </div>
+        `);
+        mapMarkers.push(marker);
+      });
+    }
+
+    function handleMapSearch(val) {
+      const q = val.toLowerCase().trim();
+      const filtered = waterSources.filter(s => s.name.toLowerCase().includes(q) || s.type.toLowerCase().includes(q));
+      renderMapMarkers(filtered);
+    }
+
+    function filterMapSources(type, btn) {
+      document.querySelectorAll('.map-chip').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+
+      if (type === 'All') {
+        renderMapMarkers(waterSources);
+      } else if (type === 'Typical') {
+        renderMapMarkers(waterSources.filter(s => s.status === 'withinTypicalRange'));
+      } else if (type === 'Unusual') {
+        renderMapMarkers(waterSources.filter(s => s.status === 'unusual'));
+      }
+    }
+
+    function openSourceFromMap(id) {
+      selectSource(id);
+      openDetailsModal();
+    }
+
+    /* ========================================================
+       INTERACTIONS, MODALS & ACTIONS
+       ======================================================== */
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      if (modal) modal.classList.add('open');
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      if (modal) modal.classList.remove('open');
+    }
+
+    function handleOverlayClick(e, id) {
+      if (e.target.id === id) {
+        closeModal(id);
+      }
+    }
+
+    function openAddReadingModal() {
+      openModal('modal-reading');
+    }
+
+    function openAddSourceModal() {
+      openModal('modal-add-source');
+    }
+
+    function openShareObservationModal() {
+      openModal('modal-reading');
+    }
+
+    function openDetailsModal() {
+      const src = waterSources.find(s => s.id === currentSourceId) || waterSources[0];
+      const content = document.getElementById('source-detail-content');
+      document.getElementById('source-detail-title').textContent = src.name;
+
+      content.innerHTML = `
+        <div style="margin-bottom: 14px;">
+          <span class="status-badge ${src.status === 'withinTypicalRange' ? 'normal' : 'unusual'}">
+            ● ${src.statusLabel}
+          </span>
+          <span class="source-type-pill" style="margin-left: 8px;">${src.type}</span>
+        </div>
+        <p style="font-size: 12.5px; color: var(--text-secondary); line-height: 1.4; margin-bottom: 16px;">
+          ${src.description}
+        </p>
+        <div style="background: var(--bg-card-subtle); border-radius: 14px; padding: 12px; margin-bottom: 16px;">
+          <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px;">GPS COORDINATES</div>
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--text-primary);">
+            Lat: ${src.lat.toFixed(4)}° N, Lng: ${src.lng.toFixed(4)}° E
+          </div>
+        </div>
+        <button class="btn-submit" onclick="closeModal('modal-source-detail'); switchTab(1);">View On Map</button>
+      `;
+      openModal('modal-source-detail');
+    }
+
+    function openAlertDetailModal(alertId) {
+      const alert = alerts.find(a => a.id === alertId);
+      if (!alert) return;
+
+      const content = document.getElementById('alert-detail-content');
+      content.innerHTML = `
+        <div style="margin-bottom: 12px;">
+          <span class="status-badge unusual">● Anomaly Spike</span>
+          <span style="font-size: 11px; color: var(--text-muted); margin-left: 8px;">${alert.timeAgo}</span>
+        </div>
+        <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 4px; color: var(--text-primary);">
+          ${alert.parameter} Anomaly: ${alert.value}
+        </h3>
+        <p style="font-size: 12px; color: var(--primary-aqua); font-weight: 600; margin-bottom: 12px;">
+          Location: ${alert.sourceName}
+        </p>
+        <div style="background: var(--status-warning-bg); border: 1px solid rgba(217,119,6,0.3); border-radius: 12px; padding: 12px; margin-bottom: 16px;">
+          <div style="font-size: 11px; font-weight: 700; color: var(--status-warning-text); margin-bottom: 4px;">INVESTIGATION ADVICE</div>
+          <div style="font-size: 12px; color: var(--status-warning-text); line-height: 1.35;">${alert.advice}</div>
+        </div>
+        ${!alert.acknowledged ? `
+          <button class="btn-submit" onclick="acknowledgeAlert('${alert.id}')">Acknowledge & Mark Resolved</button>
+        ` : `
+          <div style="text-align: center; font-size: 12px; color: var(--teal); font-weight: 600;">✓ Acknowledged by Alex Rivera</div>
+        `}
+      `;
+      openModal('modal-alert-detail');
+    }
+
+    function acknowledgeAlert(id) {
+      const alert = alerts.find(a => a.id === id);
+      if (alert) {
+        alert.acknowledged = true;
+        closeModal('modal-alert-detail');
+        showToast('Alert marked as acknowledged');
+        renderHomeAlert();
+        renderAlertsList();
+      }
+    }
+
+    function filterAlerts(filter, btn) {
+      document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderAlertsList(filter);
+    }
+
+    function toggleLikeObservation(id) {
+      const obs = observations.find(o => o.id === id);
+      if (!obs) return;
+      obs.liked = !obs.liked;
+      obs.helpful += obs.liked ? 1 : -1;
+      renderCommunityFeed();
+    }
+
+    function handleNewReading(e) {
+      e.preventDefault();
+      const srcId = document.getElementById('field-source-id').value;
+      const ph = parseFloat(document.getElementById('field-ph').value);
+      const tds = parseFloat(document.getElementById('field-tds').value);
+      const turb = parseFloat(document.getElementById('field-turb').value);
+      const temp = parseFloat(document.getElementById('field-temp').value);
+      const notes = document.getElementById('field-notes').value || 'User reported telemetry.';
+
+      const src = waterSources.find(s => s.id === srcId);
+      if (src) {
+        src.ph = ph;
+        src.tds = tds;
+        src.turbidity = turb;
+        src.temperature = temp;
+        src.lastUpdated = 'Just now';
+        src.status = (turb > 10 || ph < 6.5 || ph > 8.5) ? 'unusual' : 'withinTypicalRange';
+        src.statusLabel = src.status === 'unusual' ? 'Unusual' : 'Within Typical Range';
+      }
+
+      // Add to Community Feed
+      observations.unshift({
+        id: 'obs_' + Date.now(),
+        author: 'Alex Rivera',
+        avatar: 'AR',
+        location: (src ? src.name : 'Monitored Spot'),
+        timeAgo: 'Just now',
+        notes: notes,
+        ph: ph,
+        tds: tds,
+        turbidity: turb,
+        temperature: temp,
+        status: src ? src.status : 'withinTypicalRange',
+        helpful: 0,
+        liked: false
+      });
+
+      closeModal('modal-reading');
+      showToast('New water reading saved successfully!');
+      renderSourcesScroll();
+      renderActiveSourceMetrics();
+      renderCommunityFeed();
+      updateChartData();
+    }
+
+    function handleNewSource(e) {
+      e.preventDefault();
+      const name = document.getElementById('new-src-name').value;
+      const type = document.getElementById('new-src-type').value;
+      const lat = parseFloat(document.getElementById('new-src-lat').value);
+      const lng = parseFloat(document.getElementById('new-src-lng').value);
+      const desc = document.getElementById('new-src-desc').value || 'Community monitored station.';
+
+      const newSrc = {
+        id: 'src_' + Date.now(),
+        name: name,
+        type: type,
+        lat: lat,
+        lng: lng,
+        ph: 7.20,
+        tds: 310,
+        turbidity: 2.8,
+        temperature: 27.5,
+        status: 'withinTypicalRange',
+        statusLabel: 'Within Typical Range',
+        lastUpdated: 'Just now',
+        description: desc
+      };
+
+      waterSources.push(newSrc);
+      closeModal('modal-add-source');
+      showToast(`Source "${name}" added!`);
+      renderSourcesScroll();
+      if (leafletMap) renderMapMarkers(waterSources);
+    }
+
+    /* ========================================================
+       SETTINGS & PREFERENCES
+       ======================================================== */
+    function toggleDarkMode(enabled) {
+      document.body.setAttribute('data-theme', enabled ? 'dark' : 'light');
+      if (phChart) {
+        phChart.destroy();
+        initChart();
+      }
+      showToast(enabled ? 'Dark mode activated' : 'Light mode activated');
+    }
+
+    function toggleOfflineMode(enabled) {
+      isOffline = typeof enabled === 'boolean' ? enabled : !isOffline;
+      const banner = document.getElementById('offline-banner');
+      const toggle = document.getElementById('offline-toggle');
+      if (banner) banner.style.display = isOffline ? 'flex' : 'none';
+      if (toggle) toggle.checked = isOffline;
+      showToast(isOffline ? 'Offline Mode Active' : 'Back Online');
+    }
+
+    function toggleDemoMode(enabled) {
+      isDemoMode = enabled;
+      const banner = document.getElementById('demo-banner');
+      if (banner) banner.style.display = isDemoMode ? 'flex' : 'none';
+      
+      if (isDemoMode) {
+        initDemoSimulation();
+        showToast('Live ESP32 simulation running');
+      } else {
+        clearInterval(demoInterval);
+        showToast('Simulation paused');
+      }
+    }
+
+    function triggerSeedData() {
+      showToast('Seeding sample data to local store...');
+      setTimeout(() => {
+        showToast('Sample sources, telemetry & alerts restored!');
+        renderSourcesScroll();
+        renderActiveSourceMetrics();
+        renderAlertsList();
+        renderCommunityFeed();
+      }, 600);
+    }
+
+    /* ========================================================
+       ESP32 LIVE SIMULATION (every 10s)
+       ======================================================== */
+    function initDemoSimulation() {
+      clearInterval(demoInterval);
+      demoInterval = setInterval(() => {
+        if (!isDemoMode || isOffline) return;
+
+        // Jitter Lake View Point pH and Temp slightly
+        const lake = waterSources.find(s => s.id === 'src_lake_01');
+        if (lake) {
+          lake.ph = +(7.20 + (Math.random() * 0.12 - 0.06)).toFixed(2);
+          lake.temperature = +(28.0 + (Math.random() * 0.4 - 0.2)).toFixed(1);
+          lake.lastUpdated = 'Just now';
+        }
+
+        renderSourcesScroll();
+        if (currentSourceId === 'src_lake_01') {
+          renderActiveSourceMetrics();
+        }
+      }, 10000);
+    }
+
+    /* ========================================================
+       TOAST UTILITY
+       ======================================================== */
+    let toastTimeout = null;
+    function showToast(text, icon = '✓') {
+      const toast = document.getElementById('toast-msg');
+      document.getElementById('toast-text').textContent = text;
+      document.getElementById('toast-icon').textContent = icon;
+      toast.classList.add('show');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+  </script>
+</body>
+</html>

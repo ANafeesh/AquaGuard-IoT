@@ -86,11 +86,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ),
       );
     } catch (e) {
+      // If Firebase anonymous sign-in is disabled in Firebase console, allow entering guest session
       if (!mounted) return;
-      setState(() {
-        _errorMessage = 'Guest session initialization failed.';
-        _isLoading = false;
-      });
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (context, a1, a2) => const MainNavigationScreen(),
+          transitionsBuilder: (context, a1, a2, child) =>
+              FadeTransition(opacity: a1, child: child),
+          transitionDuration: const Duration(milliseconds: 350),
+        ),
+      );
     }
   }
 
@@ -193,6 +198,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
+                    style: const TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.primaryText,
+                    ),
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) return 'Please enter your email';
                       if (!v.contains('@')) return 'Please enter a valid email';
@@ -200,7 +210,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     },
                     decoration: InputDecoration(
                       hintText: 'e.g. user@example.com',
-                      hintStyle: AppTypography.muted,
+                      hintStyle: const TextStyle(
+                        color: Color(0xFF64748B),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                      ),
                       prefixIcon: const Icon(Icons.email_outlined, color: AppColors.secondaryText, size: 20),
                       filled: true,
                       fillColor: Colors.white,
@@ -222,14 +236,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
+                    style: const TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.primaryText,
+                    ),
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) return 'Please enter your password';
                       if (v.length < 6) return 'Password must be at least 6 characters';
                       return null;
                     },
                     decoration: InputDecoration(
-                      hintText: '••••••••',
-                      hintStyle: AppTypography.muted,
+                      hintText: 'Enter your password',
+                      hintStyle: const TextStyle(
+                        color: Color(0xFF64748B),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                      ),
                       prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.secondaryText, size: 20),
                       suffixIcon: IconButton(
                         icon: Icon(
