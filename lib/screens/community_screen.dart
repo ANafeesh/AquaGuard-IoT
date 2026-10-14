@@ -17,7 +17,6 @@ class CommunityScreen extends ConsumerStatefulWidget {
 }
 
 class _CommunityScreenState extends ConsumerState<CommunityScreen> {
-  String _selectedSourceFilter = 'All';
   String _selectedTypeFilter = 'All'; // 'All', 'River', 'Well', 'Reservoir', 'Lake', 'Stream'
   String _selectedOriginFilter = 'All'; // 'All', 'Device', 'Community'
   bool _isSearching = false;
@@ -117,10 +116,6 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
             final query = _searchController.text.trim().toLowerCase();
 
             final filtered = allObservations.where((obs) {
-              if (_selectedSourceFilter != 'All' && obs.waterSourceName != _selectedSourceFilter) {
-                return false;
-              }
-
               if (_selectedTypeFilter != 'All') {
                 final matchedSource = availableSources.where((s) => s.name == obs.waterSourceName).firstOrNull;
                 if (matchedSource != null) {

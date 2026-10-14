@@ -26,7 +26,6 @@ void main(List<String> args) async {
   stdout.writeln('Generating realistic 7-day telemetry dataset...');
 
   final now = DateTime.now().toUtc();
-  final random = Random();
 
   // 1. Monitored Water Sources
   final sources = [

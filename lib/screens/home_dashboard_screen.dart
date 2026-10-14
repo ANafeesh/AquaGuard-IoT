@@ -449,6 +449,42 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                           ),
                           error: (e, _) => Text('Error loading readings: $e'),
                           data: (readings) {
+                            if (readings.isEmpty) {
+                              return Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: isDark ? AppColors.darkCardBackground : Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.sensors_off_rounded,
+                                      size: 36,
+                                      color: isDark ? AppColors.darkSecondaryText : AppColors.secondaryText,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'No Sensor Data Available',
+                                      style: (isDark ? AppTypography.darkCardTitle : AppTypography.cardTitle).copyWith(
+                                        fontSize: 14.5,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'No live IoT or community measurements recorded for ${currentSource.name} yet.',
+                                      textAlign: TextAlign.center,
+                                      style: (isDark ? AppTypography.darkSecondary : AppTypography.secondary).copyWith(
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
                             return GridView.builder(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),

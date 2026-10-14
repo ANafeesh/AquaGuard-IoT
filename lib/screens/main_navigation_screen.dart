@@ -17,20 +17,17 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   late int _currentIndex;
-  int _previousIndex = 0;
   bool _isOfflineSimulated = false;
 
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
-    _previousIndex = widget.initialIndex;
   }
 
   void _onTabChanged(int index) {
     if (_currentIndex == index) return;
     setState(() {
-      _previousIndex = _currentIndex;
       _currentIndex = index;
     });
   }

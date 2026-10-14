@@ -198,6 +198,7 @@ class _ReportMeasurementScreenState extends ConsumerState<ReportMeasurementScree
       await reportRepo.submitObservation(
         CommunityObservation(
           id: 'obs_$clientGeneratedUuid',
+          userId: currentUser.id,
           waterSourceName: resolvedSourceName,
           locationArea: _locationController.text.trim(),
           userName: currentUser.displayName,

@@ -4,6 +4,7 @@ import 'measurement.dart';
 /// Representation of a community or device observation in the feed
 class CommunityObservation {
   final String id;
+  final String? userId;
   final String waterSourceName;
   final String locationArea;
   final String userName;
@@ -23,6 +24,7 @@ class CommunityObservation {
 
   const CommunityObservation({
     required this.id,
+    this.userId,
     required this.waterSourceName,
     required this.locationArea,
     required this.userName,
@@ -43,6 +45,7 @@ class CommunityObservation {
 
   CommunityObservation copyWith({
     String? id,
+    String? userId,
     String? waterSourceName,
     String? locationArea,
     String? userName,
@@ -62,6 +65,7 @@ class CommunityObservation {
   }) {
     return CommunityObservation(
       id: id ?? this.id,
+      userId: userId ?? this.userId,
       waterSourceName: waterSourceName ?? this.waterSourceName,
       locationArea: locationArea ?? this.locationArea,
       userName: userName ?? this.userName,
@@ -97,6 +101,7 @@ class CommunityObservation {
     final isDevice = m.isDevice;
     return CommunityObservation(
       id: m.id,
+      userId: isDevice ? m.deviceId : null,
       waterSourceName: sourceName,
       locationArea: '${m.latitude.toStringAsFixed(3)}°, ${m.longitude.toStringAsFixed(3)}°',
       userName: isDevice ? 'ESP32 Node (${m.deviceId ?? "Auto"})' : m.submittedBy,
@@ -119,6 +124,7 @@ class CommunityObservation {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'userId': userId,
       'waterSourceName': waterSourceName,
       'locationArea': locationArea,
       'userName': userName,
@@ -141,6 +147,7 @@ class CommunityObservation {
   factory CommunityObservation.fromJson(Map<String, dynamic> json) {
     return CommunityObservation(
       id: json['id'] as String? ?? 'obs_${DateTime.now().millisecondsSinceEpoch}',
+      userId: json['userId'] as String?,
       waterSourceName: json['waterSourceName'] as String? ?? 'Water Source',
       locationArea: json['locationArea'] as String? ?? 'Field Location',
       userName: json['userName'] as String? ?? 'AquaGuard User',

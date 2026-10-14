@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/config/app_config.dart';
-import '../../data/mock_data.dart';
 import '../../models/measurement.dart';
 import '../../models/reading_log_entry.dart';
 import '../../models/water_source.dart';
@@ -47,21 +47,10 @@ class FirebaseReadingRepository implements ReadingRepository {
         ];
       }
 
-      // Default baseline readings if source has not yet received telemetry
-      return [
-        ParameterReading.fromType(type: ParameterType.ph, value: 7.25),
-        ParameterReading.fromType(type: ParameterType.tds, value: 320.0),
-        ParameterReading.fromType(type: ParameterType.turbidity, value: 3.4),
-        ParameterReading.fromType(type: ParameterType.temperature, value: 28.2),
-      ];
+      // Return empty list if source has not yet received telemetry
+      return <ParameterReading>[];
     }).handleError((error) {
-      // In case of any Firestore stream error, fallback to immediate baseline
-      return [
-        ParameterReading.fromType(type: ParameterType.ph, value: 7.25),
-        ParameterReading.fromType(type: ParameterType.tds, value: 320.0),
-        ParameterReading.fromType(type: ParameterType.turbidity, value: 3.4),
-        ParameterReading.fromType(type: ParameterType.temperature, value: 28.2),
-      ];
+      return <ParameterReading>[];
     });
   }
 
@@ -106,6 +95,7 @@ class FirebaseReadingRepository implements ReadingRepository {
 
   @override
   Future<void> addReadingEntry(ReadingLogEntry entry) async {
+    final authUid = FirebaseAuth.instance.currentUser?.uid ?? 'community_user';
     final docRef = _collection.doc(entry.id);
     await docRef.set({
       'id': entry.id,
@@ -118,6 +108,7 @@ class FirebaseReadingRepository implements ReadingRepository {
       'timestamp': entry.timestamp.toIso8601String(),
       'status': entry.status.name,
       'notes': entry.notes,
+      'submittedBy': authUid,
       'source': 'community',
       'syncedAt': DateTime.now().toIso8601String(),
     });
@@ -211,17 +202,17 @@ class FirebaseReadingRepository implements ReadingRepository {
       }
     } catch (_) {}
 
-    // Fallback to pre-generated historical trend curves if no Firestore samples yet
-    switch (param) {
-      case ParameterType.ph:
-        return MockData.phTrends;
-      case ParameterType.tds:
-        return MockData.tdsTrends;
-      case ParameterType.turbidity:
-        return MockData.turbidityTrends;
-      case ParameterType.temperature:
-        return MockData.tempTrends;
-    }
+    // Return empty datasets when no Firestore samples are recorded yet
+    return {
+      '24h': <HistoricalPoint>[],
+      '7d': <HistoricalPoint>[],
+      '30d': <HistoricalPoint>[],
+      'all': <HistoricalPoint>[],
+      '24H': <HistoricalPoint>[],
+      '7D': <HistoricalPoint>[],
+      '30D': <HistoricalPoint>[],
+      'ALL': <HistoricalPoint>[],
+    };
   }
 
   @override
@@ -276,9 +267,9 @@ class FirebaseReadingRepository implements ReadingRepository {
     } catch (_) {}
 
     return {
-      'latest': '7.2',
-      'previous': '7.1',
-      'change': '+0.1',
+      'latest': '--',
+      'previous': '--',
+      'change': '0.0',
       'isPositive': true,
     };
   }

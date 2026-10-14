@@ -28,7 +28,7 @@ class _MyObservationsScreenState extends ConsumerState<MyObservationsScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) {
+      builder: (sheetContext) {
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 22.0, vertical: 20.0),
@@ -45,7 +45,7 @@ class _MyObservationsScreenState extends ConsumerState<MyObservationsScreen> {
                     ),
                     IconButton(
                       icon: const Icon(Icons.close_rounded),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => Navigator.pop(sheetContext),
                     ),
                   ],
                 ),
@@ -127,7 +127,7 @@ class _MyObservationsScreenState extends ConsumerState<MyObservationsScreen> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         onPressed: () {
-                          Navigator.pop(context);
+                          Navigator.pop(sheetContext);
                           _showEditNoteDialog(obs);
                         },
                       ),
@@ -144,7 +144,7 @@ class _MyObservationsScreenState extends ConsumerState<MyObservationsScreen> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         onPressed: () async {
-                          Navigator.pop(context);
+                          Navigator.pop(sheetContext);
                           await ref.read(reportRepositoryProvider).deleteObservation(obs.id);
                           ref.invalidate(observationsStreamProvider);
                           if (mounted) {
@@ -257,7 +257,13 @@ class _MyObservationsScreenState extends ConsumerState<MyObservationsScreen> {
           ),
           error: (e, _) => Center(child: Text('Error loading observations: $e')),
           data: (allObs) {
+            final user = ref.watch(currentUserProvider).value;
             final myObs = allObs.where((obs) {
+              if (user != null && !user.isGuest) {
+                final matchUser = (obs.userId != null && obs.userId == user.id) ||
+                    obs.userName.toLowerCase() == user.displayName.toLowerCase();
+                if (!matchUser) return false;
+              }
               if (_filterSource == 'All') return true;
               return obs.waterSourceName.toLowerCase().contains(_filterSource.toLowerCase());
             }).toList();

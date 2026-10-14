@@ -28,16 +28,23 @@ class DisclaimerBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF132238) : const Color(0xFFF0FDF4),
         borderRadius: BorderRadius.circular(14),
-        border: Border(
-          top: BorderSide(color: isDark ? AppColors.darkBorder : const Color(0xFFD1FAE5), width: 0.8),
-          right: BorderSide(color: isDark ? AppColors.darkBorder : const Color(0xFFD1FAE5), width: 0.8),
-          bottom: BorderSide(color: isDark ? AppColors.darkBorder : const Color(0xFFD1FAE5), width: 0.8),
-          left: const BorderSide(color: AppColors.teal, width: 3.5),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : const Color(0xFFD1FAE5),
+          width: 1.0,
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Container(
+            width: 3.5,
+            height: compact ? 36 : 48,
+            margin: const EdgeInsets.only(right: 10, top: 2),
+            decoration: BoxDecoration(
+              color: AppColors.teal,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
           const Padding(
             padding: EdgeInsets.only(top: 1.0),
             child: Icon(

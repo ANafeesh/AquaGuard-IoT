@@ -34,18 +34,22 @@ service cloud.firestore {
     // ---------------------------------------------------------
     // Measurements: measurements/{measurementId}
     // Authenticated users can read all water quality measurements.
-    // Users can write/create only records where submittedBy equals their UID.
+    // Citizens can create records where submittedBy equals their UID.
+    // IoT devices can create records where source equals 'device'.
     // ---------------------------------------------------------
     match /measurements/{measurementId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated()
-                    && request.resource.data.submittedBy == request.auth.uid
+                    && (request.resource.data.submittedBy == request.auth.uid || request.resource.data.source == 'device')
                     && request.resource.data.source in ['device', 'community']
                     && request.resource.data.ph is number
                     && request.resource.data.tdsEc is number
                     && request.resource.data.turbidity is number
                     && request.resource.data.temperature is number;
-      allow update, delete: if isAuthenticated() && resource.data.submittedBy == request.auth.uid;
+      allow update, delete: if isAuthenticated() && (
+        resource.data.submittedBy == request.auth.uid ||
+        resource.data.source == 'device'
+      );
     }
 
     // ---------------------------------------------------------
@@ -77,6 +81,27 @@ service cloud.firestore {
       allow delete: if false; // Audit trail: alerts are not deleted
     }
 
+    // ---------------------------------------------------------
+    // Community Observations: observations/{observationId}
+    // Authenticated users can read all observations.
+    // Authenticated users can create community observations.
+    // Any authenticated user can upvote (helpfulCount).
+    // Only the observation owner can edit notes or delete the observation.
+    // ---------------------------------------------------------
+    match /observations/{observationId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.userName is string;
+      allow update: if isAuthenticated() && (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['helpfulCount']) ||
+        ((resource.data.userId == request.auth.uid || resource.data.userName == request.auth.token.name) &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notes']))
+      );
+      allow delete: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.userName == request.auth.token.name
+      );
+    }
+
     // =========================================================
     // DEMO MODE COLLECTIONS (Prefix: demo_)
     // Separates demo simulation datasets from production data.
@@ -94,6 +119,10 @@ service cloud.firestore {
     }
 
     match /demo_alerts/{alertId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /demo_observations/{observationId} {
       allow read, write: if isAuthenticated();
     }
   }
