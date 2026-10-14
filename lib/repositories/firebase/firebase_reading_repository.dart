@@ -20,10 +20,10 @@ class FirebaseReadingRepository implements ReadingRepository {
         orElse: () => MockData.activeSource,
       );
       return [
-        ParameterReading.fromType(type: ParameterType.ph, value: source.ph),
-        ParameterReading.fromType(type: ParameterType.tds, value: source.tdsEc),
-        ParameterReading.fromType(type: ParameterType.turbidity, value: source.turbidity),
-        ParameterReading.fromType(type: ParameterType.temperature, value: source.temperature),
+        ParameterReading.fromType(type: ParameterType.ph, value: source.ph ?? 7.2),
+        ParameterReading.fromType(type: ParameterType.tds, value: source.tdsEc ?? 320.0),
+        ParameterReading.fromType(type: ParameterType.turbidity, value: source.turbidity ?? 3.0),
+        ParameterReading.fromType(type: ParameterType.temperature, value: source.temperature ?? 27.0),
       ];
     } catch (_) {
       return MockData.getLakeViewReadings();
