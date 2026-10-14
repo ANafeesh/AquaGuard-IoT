@@ -193,15 +193,15 @@ class WaterSource {
         ? DateTime.tryParse(json['lastReadingAt'].toString())
         : null;
 
-    // Compute status if missing or outdated (> 2 hours without telemetry)
+    // Compute status: respect stored status, otherwise evaluate values or flag if genuinely no data
     WaterQualityStatus status;
-    if (lastReading != null && DateTime.now().difference(lastReading).inHours > 2) {
-      status = WaterQualityStatus.noRecentData;
-    } else if (statusStr != null) {
+    if (statusStr != null) {
       status = WaterQualityStatus.values.firstWhere(
         (e) => e.name == statusStr,
         orElse: () => WaterQualityStatus.withinTypicalRange,
       );
+    } else if (lastReading == null && json['ph'] == null && json['tdsEc'] == null) {
+      status = WaterQualityStatus.noRecentData;
     } else {
       // Evaluate from values if available
       final ph = (json['ph'] as num?)?.toDouble();

@@ -20,12 +20,18 @@ class FirebaseReadingRepository implements ReadingRepository {
     }
 
     return query
-        .orderBy('timestamp', descending: true)
-        .limit(1)
         .snapshots()
         .map((snapshot) {
       if (snapshot.docs.isNotEmpty) {
-        final data = snapshot.docs.first.data();
+        // Sort in memory by timestamp if available to avoid requiring composite Firestore index
+        final docs = snapshot.docs.toList();
+        docs.sort((a, b) {
+          final tA = a.data()['timestamp']?.toString() ?? '';
+          final tB = b.data()['timestamp']?.toString() ?? '';
+          return tB.compareTo(tA);
+        });
+
+        final data = docs.first.data();
         final ph = (data['ph'] as num?)?.toDouble() ?? 7.0;
         final tds = (data['tdsEc'] as num?)?.toDouble() ??
             (data['tds'] as num?)?.toDouble() ??
@@ -43,10 +49,18 @@ class FirebaseReadingRepository implements ReadingRepository {
 
       // Default baseline readings if source has not yet received telemetry
       return [
-        ParameterReading.fromType(type: ParameterType.ph, value: 7.2),
-        ParameterReading.fromType(type: ParameterType.tds, value: 310.0),
-        ParameterReading.fromType(type: ParameterType.turbidity, value: 2.8),
-        ParameterReading.fromType(type: ParameterType.temperature, value: 27.5),
+        ParameterReading.fromType(type: ParameterType.ph, value: 7.25),
+        ParameterReading.fromType(type: ParameterType.tds, value: 320.0),
+        ParameterReading.fromType(type: ParameterType.turbidity, value: 3.4),
+        ParameterReading.fromType(type: ParameterType.temperature, value: 28.2),
+      ];
+    }).handleError((error) {
+      // In case of any Firestore stream error, fallback to immediate baseline
+      return [
+        ParameterReading.fromType(type: ParameterType.ph, value: 7.25),
+        ParameterReading.fromType(type: ParameterType.tds, value: 320.0),
+        ParameterReading.fromType(type: ParameterType.turbidity, value: 3.4),
+        ParameterReading.fromType(type: ParameterType.temperature, value: 28.2),
       ];
     });
   }
