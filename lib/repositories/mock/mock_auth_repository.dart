@@ -132,4 +132,22 @@ class MockAuthRepository implements AuthRepository {
   Future<void> sendPasswordReset(String email) async {
     // Simulated password reset in mock mode
   }
+
+  @override
+  Future<void> updateDisplayName(String displayName) async {
+    if (_currentUser != null) {
+      _currentUser = AppUser(
+        id: _currentUser!.id,
+        email: _currentUser!.email,
+        displayName: displayName,
+        role: _currentUser!.role,
+        observationsCount: _currentUser!.observationsCount,
+        monitoredSourcesCount: _currentUser!.monitoredSourcesCount,
+        daysActive: _currentUser!.daysActive,
+        isGuest: _currentUser!.isGuest,
+      );
+      await LocalStorageService.instance.setString('auth_name', displayName);
+      _authController.add(_currentUser);
+    }
+  }
 }

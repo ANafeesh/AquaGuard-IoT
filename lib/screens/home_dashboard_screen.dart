@@ -18,6 +18,8 @@ import 'report_measurement_screen.dart';
 import 'history_screen.dart';
 import '../features/history/widgets/fl_parameter_chart.dart';
 import '../core/animations/animations.dart';
+import 'profile_screen.dart';
+import '../services/firebase_seed_service.dart';
 
 class HomeDashboardScreen extends ConsumerStatefulWidget {
   final Function(int tabIndex)? onNavigateToTab;
@@ -176,7 +178,17 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                             const SizedBox(width: 8),
                             // Avatar
                             GestureDetector(
-                              onTap: () => widget.onNavigateToTab?.call(4),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ProfileScreen(
+                                      isOffline: widget.isOfflineSimulated,
+                                      onToggleOffline: widget.onToggleOffline,
+                                    ),
+                                  ),
+                                );
+                              },
                               child: Container(
                                 padding: const EdgeInsets.all(2),
                                 decoration: BoxDecoration(
@@ -289,21 +301,98 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          // Horizontal scrolling list of summary cards for EACH source
-                          SizedBox(
-                            height: 165,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              physics: const BouncingScrollPhysics(),
-                              itemCount: allSources.length,
-                              itemBuilder: (context, index) {
-                                final source = allSources[index];
-                                final isSelected = currentSource?.id == source.id;
-                                return _buildSourceSummaryCard(context, source, isSelected, isDark);
-                              },
+                          if (allSources.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              child: Container(
+                                padding: const EdgeInsets.all(18),
+                                decoration: BoxDecoration(
+                                  color: isDark ? AppColors.darkCardBackground : Colors.white,
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primaryAqua.withValues(alpha: 0.12),
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: const Icon(Icons.cloud_done_rounded, color: AppColors.primaryAqua, size: 20),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            'Connected to Firebase',
+                                            style: (isDark ? AppTypography.darkCardTitle : AppTypography.cardTitle).copyWith(fontSize: 15),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Your Firestore collections are currently empty. Click below to add sample sources, 7-day readings, and telemetry to Firebase!',
+                                      style: (isDark ? AppTypography.darkSecondary : AppTypography.secondary).copyWith(fontSize: 12.5, height: 1.35),
+                                    ),
+                                    const SizedBox(height: 14),
+                                    Wrap(
+                                      spacing: 10,
+                                      runSpacing: 8,
+                                      children: [
+                                        ElevatedButton.icon(
+                                          icon: const Icon(Icons.cloud_upload_rounded, size: 16),
+                                          label: const Text('Seed Sample Data', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: AppColors.primaryDeepOcean,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                          ),
+                                          onPressed: () async {
+                                            await FirebaseSeedService.instance.seedSampleDataToFirebase();
+                                            await _handleRefresh();
+                                          },
+                                        ),
+                                        OutlinedButton.icon(
+                                          icon: const Icon(Icons.add_rounded, size: 16),
+                                          label: const Text('Add Source', style: TextStyle(fontSize: 12.5)),
+                                          style: OutlinedButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                          ),
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(builder: (context) => const ReportMeasurementScreen()),
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          else
+                            // Horizontal scrolling list of summary cards for EACH source
+                            SizedBox(
+                              height: 165,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                physics: const BouncingScrollPhysics(),
+                                itemCount: allSources.length,
+                                itemBuilder: (context, index) {
+                                  final source = allSources[index];
+                                  final isSelected = currentSource?.id == source.id;
+                                  return _buildSourceSummaryCard(context, source, isSelected, isDark);
+                                },
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     ),
@@ -398,7 +487,12 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                         title: 'pH Indicator Trend',
                         parameterName: 'pH',
                         unit: '',
-                        points: _phTrends[_chartRange.toUpperCase()] ?? _phTrends['24H'] ?? [],
+                        points: _phTrends[_chartRange] ??
+                            _phTrends[_chartRange.toUpperCase()] ??
+                            _phTrends[_chartRange.toLowerCase()] ??
+                            _phTrends['24H'] ??
+                            _phTrends['24h'] ??
+                            [],
                         selectedRange: _chartRange,
                         onRangeChanged: (range) {
                           setState(() {
@@ -482,14 +576,12 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                               label: 'Graphs',
                               customColor: AppColors.primaryAqua,
                               onTap: () {
-                                if (currentSource != null) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => HistoryScreen(initialSource: currentSource),
-                                    ),
-                                  );
-                                }
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => HistoryScreen(initialSource: currentSource),
+                                  ),
+                                );
                               },
                             ),
                           ),

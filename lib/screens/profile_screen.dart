@@ -23,36 +23,47 @@ class ProfileScreen extends ConsumerWidget {
   });
 
   void _showEditProfileDialog(BuildContext context, WidgetRef ref, String currentName) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final controller = TextEditingController(text: currentName);
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.darkCardBackground : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Edit Display Name'),
+        title: Text(
+          'Edit Display Name',
+          style: isDark ? AppTypography.darkCardTitle : AppTypography.cardTitle,
+        ),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
+          style: TextStyle(color: isDark ? AppColors.darkPrimaryText : AppColors.primaryText),
+          decoration: InputDecoration(
             labelText: 'Full Name',
+            labelStyle: TextStyle(color: isDark ? AppColors.darkMutedText : AppColors.secondaryText),
+            filled: true,
+            fillColor: isDark ? AppColors.darkCardSubtleBg : Colors.white,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryDeepOcean,
               foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () async {
               final newName = controller.text.trim();
               if (newName.isNotEmpty) {
-                final authRepo = ref.read(authRepositoryProvider);
-                final current = authRepo.getCurrentUser();
-                if (current != null) {
-                  await authRepo.signIn(current.email, 'dummy_pass');
-                }
+                await ref.read(authRepositoryProvider).updateDisplayName(newName);
+                ref.invalidate(currentUserProvider);
               }
-              if (context.mounted) Navigator.pop(context);
+              if (ctx.mounted) Navigator.pop(ctx);
             },
             child: const Text('Save'),
           ),
@@ -63,6 +74,7 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final userAsync = ref.watch(currentUserProvider);
     final unreadAlertsAsync = ref.watch(unreadAlertsCountProvider);
     final savedSources = ref.watch(savedWaterSourcesProvider);
@@ -78,12 +90,12 @@ class ProfileScreen extends ConsumerWidget {
         : 'No saved sources yet';
 
     return Scaffold(
-      backgroundColor: AppColors.mainBackground,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.mainBackground,
       appBar: AppBar(
         title: const Text('Profile'),
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? AppColors.darkCardBackground : Colors.white,
         elevation: 0,
-        foregroundColor: AppColors.primaryText,
+        foregroundColor: isDark ? AppColors.darkPrimaryText : AppColors.primaryText,
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),
@@ -116,12 +128,12 @@ class ProfileScreen extends ConsumerWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? AppColors.darkCardBackground : Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.02),
+                        color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -133,7 +145,9 @@ class ProfileScreen extends ConsumerWidget {
                         children: [
                           CircleAvatar(
                             radius: 40,
-                            backgroundColor: AppColors.primaryDeepOcean,
+                            backgroundColor: user?.isGuest == true
+                                ? AppColors.secondaryText
+                                : AppColors.primaryDeepOcean,
                             child: Text(
                               user?.initials ?? 'AG',
                               style: const TextStyle(
@@ -164,18 +178,22 @@ class ProfileScreen extends ConsumerWidget {
                       const SizedBox(height: 14),
                       Text(
                         user?.displayName ?? 'AquaGuard User',
-                        style: AppTypography.cardTitle.copyWith(fontSize: 18),
+                        style: (isDark ? AppTypography.darkCardTitle : AppTypography.cardTitle).copyWith(fontSize: 18),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        user?.email ?? 'user@example.com',
-                        style: AppTypography.secondary.copyWith(color: AppColors.secondaryText),
+                        user?.isGuest == true
+                            ? 'Guest Observer (Read-only)'
+                            : (user?.email ?? 'user@example.com'),
+                        style: (isDark ? AppTypography.darkSecondary : AppTypography.secondary).copyWith(
+                          color: isDark ? AppColors.darkMutedText : AppColors.secondaryText,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.altLightAquaBg,
+                          color: isDark ? AppColors.statusNormalDarkBg : AppColors.altLightAquaBg,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
                         ),
@@ -196,11 +214,11 @@ class ProfileScreen extends ConsumerWidget {
               // Activity Metrics Row - dynamically derived from state
               Row(
                 children: [
-                  Expanded(child: _metricBox('$observationsCount', 'Observations')),
+                  Expanded(child: _metricBox('$observationsCount', 'Observations', isDark)),
                   const SizedBox(width: 10),
-                  Expanded(child: _metricBox('$savedSourcesCount', 'Monitored Sources')),
+                  Expanded(child: _metricBox('$savedSourcesCount', 'Monitored Sources', isDark)),
                   const SizedBox(width: 10),
-                  Expanded(child: _metricBox('${user?.daysActive ?? 28}', 'Days Active')),
+                  Expanded(child: _metricBox('${user?.daysActive ?? 28}', 'Days Active', isDark)),
                 ],
               ),
               const SizedBox(height: 24),
@@ -210,6 +228,7 @@ class ProfileScreen extends ConsumerWidget {
                 icon: Icons.assignment_outlined,
                 title: 'My Observations',
                 subtitle: '$observationsCount recorded field observations',
+                isDark: isDark,
                 onTap: () {
                   Navigator.push(
                     context,
@@ -221,6 +240,7 @@ class ProfileScreen extends ConsumerWidget {
                 icon: Icons.bookmark_border_rounded,
                 title: 'Saved Water Sources',
                 subtitle: savedSourcesSummary,
+                isDark: isDark,
                 onTap: () {
                   Navigator.push(
                     context,
@@ -233,6 +253,7 @@ class ProfileScreen extends ConsumerWidget {
                 title: 'Notifications & Alerts',
                 subtitle: 'Alerts for parameter shifts',
                 badgeText: unreadCount > 0 ? '$unreadCount New' : null,
+                isDark: isDark,
                 onTap: () {
                   Navigator.push(
                     context,
@@ -244,6 +265,7 @@ class ProfileScreen extends ConsumerWidget {
                 icon: Icons.settings_outlined,
                 title: 'Settings',
                 subtitle: 'App preferences and offline mode toggle',
+                isDark: isDark,
                 onTap: () {
                   Navigator.push(
                     context,
@@ -260,6 +282,7 @@ class ProfileScreen extends ConsumerWidget {
                 icon: Icons.help_outline_rounded,
                 title: 'Help & Information',
                 subtitle: 'Understanding indicators (pH, TDS, NTU)',
+                isDark: isDark,
                 onTap: () {
                   Navigator.push(
                     context,
@@ -271,6 +294,7 @@ class ProfileScreen extends ConsumerWidget {
                 icon: Icons.info_outline_rounded,
                 title: 'About AquaGuard',
                 subtitle: 'Smart Water Quality Monitoring UI/UX Prototype',
+                isDark: isDark,
                 onTap: () {
                   Navigator.push(
                     context,
@@ -286,19 +310,32 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _metricBox(String val, String label) {
+  Widget _metricBox(String val, String label, bool isDark) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppColors.darkCardBackground : Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
       ),
       child: Column(
         children: [
-          Text(val, style: AppTypography.cardTitle.copyWith(fontSize: 18, color: AppColors.primaryDeepOcean)),
+          Text(
+            val,
+            style: (isDark ? AppTypography.darkCardTitle : AppTypography.cardTitle).copyWith(
+              fontSize: 18,
+              color: AppColors.primaryAqua,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(label, style: AppTypography.muted.copyWith(fontSize: 11), textAlign: TextAlign.center),
+          Text(
+            label,
+            style: (isDark ? AppTypography.darkMutedText : AppTypography.muted.color != null ? AppTypography.muted : AppTypography.muted).copyWith(
+              fontSize: 11,
+              color: isDark ? AppColors.darkMutedText : AppColors.mutedText,
+            ),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -309,14 +346,15 @@ class ProfileScreen extends ConsumerWidget {
     required String title,
     required String subtitle,
     String? badgeText,
+    required bool isDark,
     required VoidCallback onTap,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppColors.darkCardBackground : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
       ),
       child: ListTile(
         onTap: onTap,
@@ -324,13 +362,22 @@ class ProfileScreen extends ConsumerWidget {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppColors.primaryAqua.withValues(alpha: 0.1),
+            color: AppColors.primaryAqua.withValues(alpha: isDark ? 0.18 : 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: AppColors.primaryDeepOcean, size: 20),
+          child: Icon(icon, color: AppColors.primaryAqua, size: 20),
         ),
-        title: Text(title, style: AppTypography.cardTitle.copyWith(fontSize: 14.5)),
-        subtitle: Text(subtitle, style: AppTypography.muted.copyWith(fontSize: 11.5)),
+        title: Text(
+          title,
+          style: (isDark ? AppTypography.darkCardTitle : AppTypography.cardTitle).copyWith(fontSize: 14.5),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: AppTypography.muted.copyWith(
+            fontSize: 11.5,
+            color: isDark ? AppColors.darkMutedText : AppColors.mutedText,
+          ),
+        ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -339,7 +386,7 @@ class ProfileScreen extends ConsumerWidget {
                 margin: const EdgeInsets.only(right: 6),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.statusAttentionBg,
+                  color: isDark ? AppColors.statusAttentionDarkBg : AppColors.statusAttentionBg,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(

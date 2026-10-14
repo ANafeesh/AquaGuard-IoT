@@ -8,13 +8,15 @@ class HelpGuideScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: AppColors.mainBackground,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.mainBackground,
       appBar: AppBar(
         title: const Text('Indicator Guide & Help'),
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? AppColors.darkCardBackground : Colors.white,
         elevation: 0,
-        foregroundColor: AppColors.primaryText,
+        foregroundColor: isDark ? AppColors.darkPrimaryText : AppColors.primaryText,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -23,11 +25,14 @@ class HelpGuideScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Understanding Water Quality Indicators', style: AppTypography.sectionHeading),
+              Text(
+                'Understanding Water Quality Indicators',
+                style: (isDark ? AppTypography.darkSectionHeading : AppTypography.sectionHeading).copyWith(fontSize: 17),
+              ),
               const SizedBox(height: 6),
               Text(
                 'AquaGuard monitors ambient aquatic health using standardized environmental telemetry indicators.',
-                style: AppTypography.secondary.copyWith(fontSize: 13),
+                style: (isDark ? AppTypography.darkSecondary : AppTypography.secondary).copyWith(fontSize: 13),
               ),
               const SizedBox(height: 20),
 
@@ -38,6 +43,7 @@ class HelpGuideScreen extends StatelessWidget {
                     'Indicates acidity or basicity. Typical natural freshwater systems fall within 6.5 to 8.5. Values outside this band may point to chemical runoff or unusual biological activity.',
                 icon: Icons.water_drop_rounded,
                 color: AppColors.primaryAqua,
+                isDark: isDark,
               ),
               _indicatorCard(
                 title: ParameterThresholds.tdsLabel,
@@ -46,6 +52,7 @@ class HelpGuideScreen extends StatelessWidget {
                     'Total Dissolved Solids reflects dissolved mineral content and inorganic salts. Typical freshwater rivers operate between 150 and 500 ppm.',
                 icon: Icons.waves_rounded,
                 color: AppColors.teal,
+                isDark: isDark,
               ),
               _indicatorCard(
                 title: ParameterThresholds.turbidityLabel,
@@ -54,6 +61,7 @@ class HelpGuideScreen extends StatelessWidget {
                     'Measures water clarity and suspended particulate matter. Clear ambient water is below 5.0 NTU. Spikes occur during heavy rain or sediment disturbance.',
                 icon: Icons.remove_red_eye_outlined,
                 color: const Color(0xFF0284C7),
+                isDark: isDark,
               ),
               _indicatorCard(
                 title: ParameterThresholds.tempLabel,
@@ -62,13 +70,14 @@ class HelpGuideScreen extends StatelessWidget {
                     'Ambient water temperature affects oxygen saturation and aquatic metabolism. Typical regional ambient water registers between 20°C and 32°C.',
                 icon: Icons.thermostat_rounded,
                 color: const Color(0xFFEA580C),
+                isDark: isDark,
               ),
 
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.altLightAquaBg,
+                  color: isDark ? const Color(0xFF132238) : AppColors.altLightAquaBg,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
                 ),
@@ -80,7 +89,11 @@ class HelpGuideScreen extends StatelessWidget {
                     Expanded(
                       child: Text(
                         'Important Reminder: AquaGuard is designed for environmental monitoring and community mapping. It does not certify drinking water safety.',
-                        style: AppTypography.muted.copyWith(fontSize: 11.5, color: AppColors.teal),
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: isDark ? Colors.teal.shade200 : AppColors.teal,
+                          height: 1.35,
+                        ),
                       ),
                     ),
                   ],
@@ -100,14 +113,15 @@ class HelpGuideScreen extends StatelessWidget {
     required String description,
     required IconData icon,
     required Color color,
+    required bool isDark,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppColors.darkCardBackground : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,15 +141,27 @@ class HelpGuideScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: AppTypography.cardTitle.copyWith(fontSize: 15)),
-                    Text('Typical Baseline: $range', style: AppTypography.secondary.copyWith(color: AppColors.primaryAqua, fontSize: 11.5, fontWeight: FontWeight.w600)),
+                    Text(
+                      title,
+                      style: (isDark ? AppTypography.darkCardTitle : AppTypography.cardTitle).copyWith(fontSize: 15),
+                    ),
+                    Text(
+                      'Typical Baseline: $range',
+                      style: const TextStyle(color: AppColors.primaryAqua, fontSize: 11.5, fontWeight: FontWeight.w600),
+                    ),
                   ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: 10),
-          Text(description, style: AppTypography.body.copyWith(fontSize: 13, color: AppColors.secondaryText)),
+          Text(
+            description,
+            style: (isDark ? AppTypography.darkSecondary : AppTypography.secondary).copyWith(
+              fontSize: 13,
+              color: isDark ? AppColors.darkSecondaryText : AppColors.secondaryText,
+            ),
+          ),
         ],
       ),
     );

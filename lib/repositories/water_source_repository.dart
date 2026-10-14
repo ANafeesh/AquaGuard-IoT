@@ -12,4 +12,10 @@ abstract class WaterSourceRepository {
 
   /// Update the locally selected water source
   Future<void> setActiveWaterSourceId(String id);
+
+  /// Add or update a water source
+  Future<void> addWaterSource(WaterSource source);
+
+  /// Delete a water source by ID
+  Future<void> deleteWaterSource(String id);
 }

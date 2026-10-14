@@ -12,15 +12,16 @@ class SavedWaterSourcesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final savedSources = ref.watch(savedWaterSourcesProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.mainBackground,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.mainBackground,
       appBar: AppBar(
         title: const Text('Saved Water Sources'),
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? AppColors.darkCardBackground : Colors.white,
         elevation: 0,
-        foregroundColor: AppColors.primaryText,
+        foregroundColor: isDark ? AppColors.darkPrimaryText : AppColors.primaryText,
       ),
       body: SafeArea(
         child: savedSources.isEmpty
@@ -39,7 +40,7 @@ class SavedWaterSourcesScreen extends ConsumerWidget {
                   children: [
                     Text(
                       '${savedSources.length} Monitored Water Sources',
-                      style: AppTypography.sectionHeading.copyWith(fontSize: 16),
+                      style: (isDark ? AppTypography.darkSectionHeading : AppTypography.sectionHeading).copyWith(fontSize: 16),
                     ),
                     const SizedBox(height: 12),
                     ...savedSources.map((source) {
@@ -52,7 +53,7 @@ class SavedWaterSourcesScreen extends ConsumerWidget {
                             alignment: Alignment.centerRight,
                             padding: const EdgeInsets.only(right: 20),
                             decoration: BoxDecoration(
-                              color: AppColors.statusAttentionBg,
+                              color: isDark ? AppColors.statusAttentionDarkBg : AppColors.statusAttentionBg,
                               borderRadius: BorderRadius.circular(18),
                             ),
                             child: const Icon(

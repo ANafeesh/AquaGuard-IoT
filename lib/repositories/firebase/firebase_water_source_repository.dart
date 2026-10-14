@@ -74,4 +74,14 @@ class FirebaseWaterSourceRepository implements WaterSourceRepository {
   Future<void> setActiveWaterSourceId(String id) async {
     await LocalStorageService.instance.setString(_activeSourceStorageKey, id);
   }
+
+  @override
+  Future<void> addWaterSource(WaterSource source) async {
+    await _collection.doc(source.id).set(source.toJson());
+  }
+
+  @override
+  Future<void> deleteWaterSource(String id) async {
+    await _collection.doc(id).delete();
+  }
 }

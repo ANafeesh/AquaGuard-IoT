@@ -169,8 +169,31 @@ class _ReportMeasurementScreenState extends ConsumerState<ReportMeasurementScree
       }
 
       // Update repositories
+      final waterSourceRepo = ref.read(waterSourceRepositoryProvider);
       final reportRepo = ref.read(reportRepositoryProvider);
       final readingRepo = ref.read(readingRepositoryProvider);
+
+      if (_isNewSource) {
+        final newSource = WaterSource(
+          id: resolvedSourceId,
+          name: resolvedSourceName,
+          type: WaterSourceType.other,
+          latitude: 6.9271,
+          longitude: 79.8612,
+          createdBy: currentUser.displayName,
+          createdAt: now,
+          lastReadingAt: now,
+          ph: phVal,
+          tdsEc: tdsVal,
+          turbidity: turbVal,
+          temperature: tempVal,
+          status: WaterQualityStatus.withinTypicalRange,
+          description: _notesController.text.trim().isNotEmpty
+              ? _notesController.text.trim()
+              : 'Community monitored water point',
+        );
+        await waterSourceRepo.addWaterSource(newSource);
+      }
 
       await reportRepo.submitObservation(
         CommunityObservation(

@@ -18,6 +18,8 @@ import '../repositories/firebase/firebase_alert_repository.dart';
 import '../repositories/firebase/firebase_report_repository.dart';
 import '../repositories/firebase/firebase_auth_repository.dart';
 
+import '../repositories/firebase/firebase_device_repository.dart';
+
 /// Provider for WaterSourceRepository
 final waterSourceRepositoryProvider = Provider<WaterSourceRepository>((ref) {
   if (AppConfig.useMockData || !AppConfig.isFirebaseInitialized) {
@@ -60,5 +62,8 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 
 /// Provider for DeviceRepository
 final deviceRepositoryProvider = Provider<DeviceRepository>((ref) {
-  return MockDeviceRepository();
+  if (AppConfig.useMockData || !AppConfig.isFirebaseInitialized) {
+    return MockDeviceRepository();
+  }
+  return FirebaseDeviceRepository();
 });

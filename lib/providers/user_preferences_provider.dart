@@ -126,8 +126,33 @@ class UserPreferencesNotifier extends Notifier<UserPreferences> {
     await updatePreferences(updated);
   }
 
+  Future<void> setDarkMode(bool isDark) async {
+    final updated = state.copyWith(isDarkMode: isDark);
+    await updatePreferences(updated);
+  }
+
   Future<void> toggleOfflineSimulation() async {
     final updated = state.copyWith(isOfflineSimulated: !state.isOfflineSimulated);
+    await updatePreferences(updated);
+  }
+
+  Future<void> togglePushNotifications() async {
+    final updated = state.copyWith(pushNotifications: !state.pushNotifications);
+    await updatePreferences(updated);
+  }
+
+  Future<void> toggleOfflineSync() async {
+    final updated = state.copyWith(offlineDataSync: !state.offlineDataSync);
+    await updatePreferences(updated);
+  }
+
+  Future<void> toggleSensorAutoRefresh() async {
+    final updated = state.copyWith(sensorAutoRefresh: !state.sensorAutoRefresh);
+    await updatePreferences(updated);
+  }
+
+  Future<void> toggleGpsLocationAccess() async {
+    final updated = state.copyWith(gpsLocationAccess: !state.gpsLocationAccess);
     await updatePreferences(updated);
   }
 

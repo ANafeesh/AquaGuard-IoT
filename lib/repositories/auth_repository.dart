@@ -65,4 +65,7 @@ abstract class AuthRepository {
 
   /// Trigger password reset email
   Future<void> sendPasswordReset(String email);
+
+  /// Update user's profile display name
+  Future<void> updateDisplayName(String displayName);
 }

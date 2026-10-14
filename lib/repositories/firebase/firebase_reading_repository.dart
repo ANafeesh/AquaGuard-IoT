@@ -180,11 +180,19 @@ class FirebaseReadingRepository implements ReadingRepository {
           pointsAll.add(point);
         }
 
+        final result24h = points24h.isNotEmpty ? points24h : pointsAll;
+        final result7d = points7d.isNotEmpty ? points7d : pointsAll;
+        final result30d = points30d.isNotEmpty ? points30d : pointsAll;
+
         return {
-          '24h': points24h.isNotEmpty ? points24h : pointsAll,
-          '7d': points7d.isNotEmpty ? points7d : pointsAll,
-          '30d': points30d.isNotEmpty ? points30d : pointsAll,
+          '24h': result24h,
+          '7d': result7d,
+          '30d': result30d,
           'all': pointsAll,
+          '24H': result24h,
+          '7D': result7d,
+          '30D': result30d,
+          'ALL': pointsAll,
         };
       }
     } catch (_) {}

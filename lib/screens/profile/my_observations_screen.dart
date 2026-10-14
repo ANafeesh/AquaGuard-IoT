@@ -19,9 +19,12 @@ class _MyObservationsScreenState extends ConsumerState<MyObservationsScreen> {
   String _filterSource = 'All';
 
   void _showObservationDetail(CommunityObservation obs) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: isDark ? AppColors.darkCardBackground : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -36,7 +39,10 @@ class _MyObservationsScreenState extends ConsumerState<MyObservationsScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Observation Record', style: AppTypography.sectionHeading),
+                    Text(
+                      'Observation Record',
+                      style: isDark ? AppTypography.darkSectionHeading : AppTypography.sectionHeading,
+                    ),
                     IconButton(
                       icon: const Icon(Icons.close_rounded),
                       onPressed: () => Navigator.pop(context),
@@ -49,7 +55,10 @@ class _MyObservationsScreenState extends ConsumerState<MyObservationsScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(obs.waterSourceName, style: AppTypography.largeTitle.copyWith(fontSize: 20)),
+                    Text(
+                      obs.waterSourceName,
+                      style: (isDark ? AppTypography.darkLargeTitle : AppTypography.largeTitle).copyWith(fontSize: 20),
+                    ),
                     StatusBadge(status: obs.status),
                   ],
                 ),
@@ -58,127 +67,97 @@ class _MyObservationsScreenState extends ConsumerState<MyObservationsScreen> {
                   children: [
                     const Icon(Icons.access_time_rounded, size: 13, color: AppColors.secondaryText),
                     const SizedBox(width: 4),
-                    Text(obs.timeAgo, style: AppTypography.muted),
-                    const SizedBox(width: 12),
-                    const Icon(Icons.location_on_outlined, size: 13, color: AppColors.secondaryText),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        obs.locationArea,
-                        style: AppTypography.muted,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                    Text(
+                      'Reported ${obs.timeAgo} • By ${obs.userName}',
+                      style: AppTypography.muted.copyWith(fontSize: 12),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
 
-                // Simulated Mini-Map Preview
-                Container(
-                  height: 110,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE2EFE9),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Positioned(
-                        right: 20,
-                        bottom: 10,
-                        child: Container(
-                          width: 80,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFBAE6FD),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.location_pin, color: AppColors.primaryDeepOcean, size: 28),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              obs.locationArea,
-                              style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Recorded Readings
-                Text('Recorded Readings', style: AppTypography.cardTitle.copyWith(fontSize: 14)),
-                const SizedBox(height: 8),
+                // Parameter Metrics Row
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _metricChip('pH', obs.ph?.toStringAsFixed(1) ?? 'N/A'),
-                    _metricChip('TDS', '${obs.tds ?? '--'} ppm'),
-                    _metricChip('Turbidity', '${obs.turbidity ?? '--'} NTU'),
-                    _metricChip('Temp', '${obs.temperature ?? '--'} °C'),
+                    _metricChip('pH Level', obs.ph?.toStringAsFixed(1) ?? '--', isDark),
+                    _metricChip('TDS / EC', '${obs.tds ?? "--"} ppm', isDark),
+                    _metricChip('Turbidity', '${obs.turbidity ?? "--"} NTU', isDark),
+                    _metricChip('Temp', '${obs.temperature ?? "--"}°C', isDark),
                   ],
                 ),
                 const SizedBox(height: 16),
 
-                // Notes
-                Text('Observation Notes', style: AppTypography.cardTitle.copyWith(fontSize: 14)),
-                const SizedBox(height: 4),
-                Text(
-                  obs.notes,
-                  style: AppTypography.body.copyWith(fontStyle: FontStyle.italic),
-                ),
-                const SizedBox(height: 20),
+                // Qualitative Observation Notes
+                if (obs.notes.isNotEmpty) ...[
+                  Text(
+                    'Field Notes',
+                    style: (isDark ? AppTypography.darkCardTitle : AppTypography.cardTitle).copyWith(fontSize: 14),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkCardSubtleBg : const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+                    ),
+                    child: Text(
+                      obs.notes,
+                      style: (isDark ? AppTypography.darkSecondary : AppTypography.secondary).copyWith(
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
 
-                // Actions: Edit and Delete
+                // Action buttons
                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
+                        icon: const Icon(Icons.edit_note_rounded, size: 18),
+                        label: const Text('Edit Note'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.statusAttention,
-                          side: const BorderSide(color: AppColors.statusAttention),
+                          foregroundColor: isDark ? AppColors.primaryAqua : AppColors.primaryDeepOcean,
+                          side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.border),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                        label: const Text('Delete'),
                         onPressed: () {
                           Navigator.pop(context);
-                          _confirmDelete(obs);
+                          _showEditNoteDialog(obs);
                         },
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: ElevatedButton.icon(
+                        icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                        label: const Text('Delete'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryDeepOcean,
+                          backgroundColor: AppColors.statusAttention,
                           foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        icon: const Icon(Icons.edit_outlined, size: 18),
-                        label: const Text('Edit Note'),
-                        onPressed: () {
+                        onPressed: () async {
                           Navigator.pop(context);
-                          _editNote(obs);
+                          await ref.read(reportRepositoryProvider).deleteObservation(obs.id);
+                          ref.invalidate(observationsStreamProvider);
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Observation record deleted.')),
+                            );
+                          }
                         },
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 10),
               ],
             ),
           ),
@@ -187,69 +166,48 @@ class _MyObservationsScreenState extends ConsumerState<MyObservationsScreen> {
     );
   }
 
-  void _confirmDelete(CommunityObservation obs) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Text('Delete Observation?'),
-        content: Text('Are you sure you want to remove your observation for "${obs.waterSourceName}"?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.statusAttention,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () async {
-              Navigator.pop(context);
-              await ref.read(reportRepositoryProvider).deleteObservation(obs.id);
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Observation deleted from records.')),
-                );
-              }
-            },
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-  }
+  void _showEditNoteDialog(CommunityObservation obs) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final controller = TextEditingController(text: obs.notes);
 
-  void _editNote(CommunityObservation obs) {
-    final noteController = TextEditingController(text: obs.notes);
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Text('Edit Observation Note'),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.darkCardBackground : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Edit Observation Note',
+          style: isDark ? AppTypography.darkCardTitle : AppTypography.cardTitle,
+        ),
         content: TextField(
-          controller: noteController,
+          controller: controller,
           maxLines: 3,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            hintText: 'Update observation notes...',
+          style: TextStyle(color: isDark ? AppColors.darkPrimaryText : AppColors.primaryText),
+          decoration: InputDecoration(
+            hintText: 'Enter observation note...',
+            filled: true,
+            fillColor: isDark ? AppColors.darkCardSubtleBg : Colors.white,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryDeepOcean,
               foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () async {
-              final newNote = noteController.text.trim();
-              Navigator.pop(context);
+              final newNote = controller.text.trim();
               if (newNote.isNotEmpty) {
                 await ref.read(reportRepositoryProvider).updateObservationNote(obs.id, newNote);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Observation note updated successfully.')),
-                  );
-                }
+                ref.invalidate(observationsStreamProvider);
               }
+              if (ctx.mounted) Navigator.pop(ctx);
             },
             child: const Text('Save'),
           ),
@@ -258,19 +216,22 @@ class _MyObservationsScreenState extends ConsumerState<MyObservationsScreen> {
     );
   }
 
-  Widget _metricChip(String label, String value) {
+  Widget _metricChip(String label, String value, bool isDark) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.mainBackground,
+        color: isDark ? AppColors.darkCardSubtleBg : AppColors.mainBackground,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
       ),
       child: Column(
         children: [
-          Text(label, style: AppTypography.muted.copyWith(fontSize: 10.5)),
+          Text(label, style: AppTypography.muted.copyWith(fontSize: 10.5, color: isDark ? AppColors.darkMutedText : AppColors.mutedText)),
           const SizedBox(height: 2),
-          Text(value, style: AppTypography.secondary.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            value,
+            style: (isDark ? AppTypography.darkSecondary : AppTypography.secondary).copyWith(fontWeight: FontWeight.w700),
+          ),
         ],
       ),
     );
@@ -278,15 +239,16 @@ class _MyObservationsScreenState extends ConsumerState<MyObservationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final observationsAsync = ref.watch(observationsStreamProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.mainBackground,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.mainBackground,
       appBar: AppBar(
         title: const Text('My Observations'),
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? AppColors.darkCardBackground : Colors.white,
         elevation: 0,
-        foregroundColor: AppColors.primaryText,
+        foregroundColor: isDark ? AppColors.darkPrimaryText : AppColors.primaryText,
       ),
       body: SafeArea(
         child: observationsAsync.when(
@@ -297,7 +259,7 @@ class _MyObservationsScreenState extends ConsumerState<MyObservationsScreen> {
           data: (allObs) {
             final myObs = allObs.where((obs) {
               if (_filterSource == 'All') return true;
-              return obs.waterSourceName.contains(_filterSource);
+              return obs.waterSourceName.toLowerCase().contains(_filterSource.toLowerCase());
             }).toList();
 
             if (myObs.isEmpty) {
@@ -320,7 +282,7 @@ class _MyObservationsScreenState extends ConsumerState<MyObservationsScreen> {
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
-                      children: ['All', 'Lake View', 'Well', 'Riverside'].map((filter) {
+                      children: ['All', 'Lake View', 'Well', 'River', 'Reservoir'].map((filter) {
                         final isSelected = _filterSource == filter;
                         return Padding(
                           padding: const EdgeInsets.only(right: 8.0),
@@ -328,14 +290,18 @@ class _MyObservationsScreenState extends ConsumerState<MyObservationsScreen> {
                             selected: isSelected,
                             label: Text(filter),
                             selectedColor: AppColors.primaryAqua,
-                            backgroundColor: Colors.white,
+                            backgroundColor: isDark ? AppColors.darkCardBackground : Colors.white,
                             side: BorderSide(
-                              color: isSelected ? AppColors.primaryAqua : AppColors.border,
+                              color: isSelected
+                                  ? AppColors.primaryAqua
+                                  : (isDark ? AppColors.darkBorder : AppColors.border),
                             ),
                             labelStyle: TextStyle(
                               fontSize: 12,
                               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                              color: isSelected ? Colors.white : AppColors.primaryText,
+                              color: isSelected
+                                  ? Colors.white
+                                  : (isDark ? AppColors.darkPrimaryText : AppColors.primaryText),
                             ),
                             onSelected: (val) {
                               setState(() {
@@ -352,7 +318,7 @@ class _MyObservationsScreenState extends ConsumerState<MyObservationsScreen> {
                   // Observations Count Banner
                   Text(
                     '${myObs.length} Submitted Observations',
-                    style: AppTypography.sectionHeading.copyWith(fontSize: 16),
+                    style: (isDark ? AppTypography.darkSectionHeading : AppTypography.sectionHeading).copyWith(fontSize: 16),
                   ),
                   const SizedBox(height: 12),
 
@@ -361,12 +327,12 @@ class _MyObservationsScreenState extends ConsumerState<MyObservationsScreen> {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isDark ? AppColors.darkCardBackground : Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border),
+                        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.02),
+                            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
                             blurRadius: 8,
                             offset: const Offset(0, 3),
                           ),
@@ -378,7 +344,7 @@ class _MyObservationsScreenState extends ConsumerState<MyObservationsScreen> {
                         leading: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryAqua.withValues(alpha: 0.12),
+                            color: AppColors.primaryAqua.withValues(alpha: isDark ? 0.2 : 0.12),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(
@@ -390,7 +356,13 @@ class _MyObservationsScreenState extends ConsumerState<MyObservationsScreen> {
                         title: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(obs.waterSourceName, style: AppTypography.cardTitle.copyWith(fontSize: 15)),
+                            Expanded(
+                              child: Text(
+                                obs.waterSourceName,
+                                style: (isDark ? AppTypography.darkCardTitle : AppTypography.cardTitle).copyWith(fontSize: 15),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
                             StatusBadge(status: obs.status, isCompact: true),
                           ],
                         ),
@@ -400,18 +372,30 @@ class _MyObservationsScreenState extends ConsumerState<MyObservationsScreen> {
                             const SizedBox(height: 4),
                             Text(
                               'pH ${obs.ph?.toStringAsFixed(1) ?? '--'} • Turbidity ${obs.turbidity ?? '--'} NTU',
-                              style: AppTypography.secondary.copyWith(fontSize: 12, fontWeight: FontWeight.w600),
+                              style: (isDark ? AppTypography.darkSecondary : AppTypography.secondary).copyWith(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                             const SizedBox(height: 2),
                             Row(
                               children: [
-                                const Icon(Icons.access_time_rounded, size: 12, color: AppColors.mutedText),
+                                Icon(Icons.access_time_rounded, size: 12, color: isDark ? AppColors.darkMutedText : AppColors.mutedText),
                                 const SizedBox(width: 4),
-                                Text(obs.timeAgo, style: AppTypography.muted.copyWith(fontSize: 11)),
+                                Text(
+                                  obs.timeAgo,
+                                  style: AppTypography.muted.copyWith(
+                                    fontSize: 11,
+                                    color: isDark ? AppColors.darkMutedText : AppColors.mutedText,
+                                  ),
+                                ),
                                 const SizedBox(width: 10),
                                 const Icon(Icons.sync_rounded, size: 12, color: AppColors.statusNormal),
                                 const SizedBox(width: 4),
-                                Text('Synced', style: AppTypography.muted.copyWith(fontSize: 11, color: AppColors.statusNormal)),
+                                const Text(
+                                  'Synced',
+                                  style: TextStyle(fontSize: 11, color: AppColors.statusNormal, fontWeight: FontWeight.w600),
+                                ),
                               ],
                             ),
                           ],
