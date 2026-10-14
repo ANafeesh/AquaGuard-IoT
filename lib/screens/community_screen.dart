@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/app_colors.dart';
 import '../core/constants/app_typography.dart';
+import '../models/water_source.dart';
 import '../models/community_observation.dart';
 import '../providers/app_state_providers.dart';
 import '../widgets/status_badge.dart';

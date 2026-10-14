@@ -42,7 +42,7 @@ class AppTheme {
           letterSpacing: -0.3,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.cardBackground,
         elevation: 0,
         margin: EdgeInsets.zero,
@@ -156,7 +156,7 @@ class AppTheme {
           letterSpacing: -0.3,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.darkCardBackground,
         elevation: 0,
         margin: EdgeInsets.zero,

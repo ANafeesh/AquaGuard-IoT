@@ -27,7 +27,6 @@ class FirebaseSeedService {
   /// Seeds realistic water-quality data directly into Firestore
   Future<void> seedSampleDataToFirebase({Function(String status)? onProgress}) async {
     final now = DateTime.now().toUtc();
-    final random = Random();
 
     onProgress?.call('Seeding water sources...');
 
@@ -179,25 +178,25 @@ class FirebaseSeedService {
       AlertItem(
         id: 'alt_spike_river_01',
         sourceId: 'src_river_02',
+        measurementId: 'meas_river_01_0',
         waterSourceName: 'Riverside Reach Station',
         parameter: 'Turbidity',
         value: 16.5,
-        baseline: 'Below 5.0 NTU',
-        severity: AlertSeverity.warning,
-        status: WaterQualityStatus.unusual,
+        severity: WaterQualityStatus.unusual,
+        investigationAdvice: 'Turbidity exceeds typical seasonal baseline (Below 5.0 NTU). Check filter intake and upstream sediment.',
         createdAt: now.subtract(const Duration(minutes: 18)),
         acknowledged: false,
-        message: 'Unusual water-quality measurement detected at this location.',
+        message: 'Unusual turbidity measurement detected at Riverside Reach Station.',
       ),
       AlertItem(
         id: 'alt_ph_well_02',
         sourceId: 'src_well_03',
+        measurementId: 'meas_well_02_0',
         waterSourceName: 'Community Groundwater Well',
         parameter: 'pH Level',
         value: 6.42,
-        baseline: '6.5 – 8.5',
-        severity: AlertSeverity.attention,
-        status: WaterQualityStatus.unusual,
+        severity: WaterQualityStatus.unusual,
+        investigationAdvice: 'Slightly acidic reading outside typical baseline (6.5 – 8.5). Recommend secondary sample testing.',
         createdAt: now.subtract(const Duration(hours: 3)),
         acknowledged: true,
         message: 'Slightly acidic reading outside typical seasonal baseline.',

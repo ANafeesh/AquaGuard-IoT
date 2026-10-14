@@ -330,7 +330,7 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: (isDark ? AppTypography.darkMutedText : AppTypography.muted.color != null ? AppTypography.muted : AppTypography.muted).copyWith(
+            style: (isDark ? AppTypography.darkSecondary : AppTypography.muted).copyWith(
               fontSize: 11,
               color: isDark ? AppColors.darkMutedText : AppColors.mutedText,
             ),

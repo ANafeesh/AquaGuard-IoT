@@ -58,8 +58,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       ),
     ];
 
-    final isForward = _currentIndex >= _previousIndex;
-
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
