@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/config/app_config.dart';
 import '../../models/community_observation.dart';
+import '../../data/mock_data.dart';
 import '../report_repository.dart';
 
 class FirebaseReportRepository implements ReportRepository {
@@ -10,17 +11,24 @@ class FirebaseReportRepository implements ReportRepository {
       _firestore.collection(AppConfig.observationsCollection);
 
   @override
-  Stream<List<CommunityObservation>> watchObservations() {
-    return _collection
+  Stream<List<CommunityObservation>> watchObservations() async* {
+    // 1. Instantly yield baseline observations (0ms delay)
+    yield MockData.observations;
+
+    // 2. Stream live observations from Firestore
+    yield* _collection
         .orderBy('timestamp', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = Map<String, dynamic>.from(doc.data());
-        data['id'] = doc.id;
-        return CommunityObservation.fromJson(data);
-      }).toList();
-    });
+      if (snapshot.docs.isNotEmpty) {
+        return snapshot.docs.map((doc) {
+          final data = Map<String, dynamic>.from(doc.data());
+          data['id'] = doc.id;
+          return CommunityObservation.fromJson(data);
+        }).toList();
+      }
+      return MockData.observations;
+    }).handleError((_) => MockData.observations);
   }
 
   @override

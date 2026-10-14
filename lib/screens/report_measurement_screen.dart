@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../core/constants/app_colors.dart';
 import '../core/constants/app_typography.dart';
+import '../core/constants/sri_lanka_locations.dart';
 import '../core/utils/reading_validator.dart';
 import '../core/widgets/disclaimer_banner.dart';
 import '../models/water_source.dart';
@@ -12,17 +13,22 @@ import '../models/reading_log_entry.dart';
 import '../providers/app_state_providers.dart';
 import '../providers/repository_providers.dart';
 import '../core/services/offline_sync_service.dart';
+import '../widgets/location_picker_dialog.dart';
 import '../widgets/primary_button.dart';
 import 'auth/login_screen.dart';
 
 class ReportMeasurementScreen extends ConsumerStatefulWidget {
   final String? initialSourceName;
   final String? preselectedSourceId;
+  final double? initialLatitude;
+  final double? initialLongitude;
 
   const ReportMeasurementScreen({
     super.key,
     this.initialSourceName,
     this.preselectedSourceId,
+    this.initialLatitude,
+    this.initialLongitude,
   });
 
   @override
@@ -35,12 +41,16 @@ class _ReportMeasurementScreenState extends ConsumerState<ReportMeasurementScree
   bool _isNewSource = false;
   String? _selectedSourceId;
   final TextEditingController _newSourceNameController = TextEditingController();
-  final TextEditingController _locationController = TextEditingController(text: '6.9271° N, 79.8612° E');
+  final TextEditingController _locationController = TextEditingController();
   final TextEditingController _phController = TextEditingController();
   final TextEditingController _tdsController = TextEditingController();
   final TextEditingController _turbidityController = TextEditingController();
   final TextEditingController _tempController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
+
+  double? _selectedLatitude;
+  double? _selectedLongitude;
+  String? _matchedLocationName;
 
   bool _isDetectingGps = false;
   bool _isSubmitting = false;
@@ -52,10 +62,54 @@ class _ReportMeasurementScreenState extends ConsumerState<ReportMeasurementScree
     super.initState();
     _selectedSourceId = widget.preselectedSourceId;
     _timestamp = DateTime.now();
+
+    // Initialize coordinates with user-provided, preset, or Kandy/Colombo defaults
+    if (widget.initialLatitude != null && widget.initialLongitude != null) {
+      _selectedLatitude = widget.initialLatitude;
+      _selectedLongitude = widget.initialLongitude;
+      _locationController.text =
+          '${_selectedLatitude!.toStringAsFixed(4)}° N, ${_selectedLongitude!.toStringAsFixed(4)}° E';
+      _isNewSource = true;
+    } else {
+      _selectedLatitude = 6.9271;
+      _selectedLongitude = 79.8612;
+      _locationController.text = '6.9271° N, 79.8612° E';
+    }
+
+    if (widget.initialSourceName != null && widget.initialSourceName!.isNotEmpty) {
+      _newSourceNameController.text = widget.initialSourceName!;
+      _isNewSource = true;
+      final match = SriLankaLocations.findByName(widget.initialSourceName!);
+      if (match != null) {
+        _selectedLatitude = match.latitude;
+        _selectedLongitude = match.longitude;
+        _matchedLocationName = match.name;
+        _locationController.text = match.formattedCoordinates;
+      }
+    }
+
+    _newSourceNameController.addListener(_onSourceNameChanged);
+  }
+
+  void _onSourceNameChanged() {
+    if (!_isNewSource) return;
+    final text = _newSourceNameController.text.trim();
+    if (text.isNotEmpty) {
+      final match = SriLankaLocations.findByName(text);
+      if (match != null && _matchedLocationName != match.name) {
+        setState(() {
+          _matchedLocationName = match.name;
+          _selectedLatitude = match.latitude;
+          _selectedLongitude = match.longitude;
+          _locationController.text = match.formattedCoordinates;
+        });
+      }
+    }
   }
 
   @override
   void dispose() {
+    _newSourceNameController.removeListener(_onSourceNameChanged);
     _newSourceNameController.dispose();
     _locationController.dispose();
     _phController.dispose();
@@ -73,7 +127,18 @@ class _ReportMeasurementScreenState extends ConsumerState<ReportMeasurementScree
     if (!mounted) return;
     setState(() {
       _isDetectingGps = false;
-      _locationController.text = '6.9285° N, 79.8624° E (Accuracy: ±2.4m)';
+      // If user named kandy, keep near Kandy GPS coordinates
+      final isKandy = (_newSourceNameController.text.toLowerCase().contains('kandy') ||
+          (_matchedLocationName != null && _matchedLocationName!.toLowerCase().contains('kandy')));
+      if (isKandy) {
+        _selectedLatitude = 7.2906;
+        _selectedLongitude = 80.6337;
+        _locationController.text = '7.2906° N, 80.6337° E (Kandy GPS ±2.0m)';
+      } else {
+        _selectedLatitude = 6.9285;
+        _selectedLongitude = 79.8624;
+        _locationController.text = '6.9285° N, 79.8624° E (Colombo GPS ±2.4m)';
+      }
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -82,6 +147,143 @@ class _ReportMeasurementScreenState extends ConsumerState<ReportMeasurementScree
         duration: Duration(seconds: 2),
       ),
     );
+  }
+
+  Future<void> _showLocationPicker() async {
+    final result = await LocationPickerDialog.show(
+      context,
+      initialLatitude: _selectedLatitude ?? 7.2906,
+      initialLongitude: _selectedLongitude ?? 80.6337,
+      title: 'Pick Water Source on Map',
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        _selectedLatitude = result.latitude;
+        _selectedLongitude = result.longitude;
+        _matchedLocationName = result.locationName;
+        _locationController.text = result.formattedCoordinates;
+        if (_newSourceNameController.text.trim().isEmpty && result.locationName != null) {
+          _newSourceNameController.text = '${result.locationName} Water Point';
+        }
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result.locationName != null
+                ? 'Selected ${result.locationName} (${result.formattedCoordinates})'
+                : 'Selected custom coordinates: ${result.formattedCoordinates}',
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  void _showKnownLocationsSheet() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppColors.darkCardBackground : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Choose Actual Sri Lanka Location',
+                      style: (isDark ? AppTypography.darkCardTitle : AppTypography.cardTitle)
+                          .copyWith(fontSize: 16),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: SriLankaLocations.catalog.length,
+                  itemBuilder: (context, index) {
+                    final loc = SriLankaLocations.catalog[index];
+                    final isSelected = _matchedLocationName == loc.name;
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: isSelected
+                            ? AppColors.primaryDeepOcean
+                            : AppColors.primaryAqua.withValues(alpha: 0.15),
+                        child: Icon(
+                          Icons.location_city_rounded,
+                          color: isSelected ? Colors.white : AppColors.primaryDeepOcean,
+                          size: 18,
+                        ),
+                      ),
+                      title: Text(
+                        loc.name,
+                        style: TextStyle(
+                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                          color: isDark ? AppColors.darkPrimaryText : AppColors.primaryText,
+                        ),
+                      ),
+                      subtitle: Text(
+                        '${loc.province} • ${loc.defaultWaterBody}',
+                        style: const TextStyle(fontSize: 12, color: AppColors.secondaryText),
+                      ),
+                      trailing: Text(
+                        '${loc.latitude.toStringAsFixed(2)}°, ${loc.longitude.toStringAsFixed(2)}°',
+                        style: const TextStyle(fontSize: 11, fontFamily: 'monospace', color: AppColors.teal),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        setState(() {
+                          _selectedLatitude = loc.latitude;
+                          _selectedLongitude = loc.longitude;
+                          _matchedLocationName = loc.name;
+                          _locationController.text = loc.formattedCoordinates;
+                          if (_newSourceNameController.text.trim().isEmpty) {
+                            _newSourceNameController.text = loc.defaultWaterBody;
+                          }
+                        });
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  (double, double) _resolveCoordinates() {
+    if (_selectedLatitude != null && _selectedLongitude != null) {
+      return (_selectedLatitude!, _selectedLongitude!);
+    }
+    final text = _locationController.text;
+    final regex = RegExp(r'([-+]?[0-9]*\.?[0-9]+)');
+    final matches = regex.allMatches(text).toList();
+    if (matches.length >= 2) {
+      final lat = double.tryParse(matches[0].group(0) ?? '');
+      final lng = double.tryParse(matches[1].group(0) ?? '');
+      if (lat != null && lng != null) {
+        return (lat, lng);
+      }
+    }
+    return (7.2906, 80.6337);
   }
 
   Future<void> _handleSubmit() async {
@@ -128,6 +330,8 @@ class _ReportMeasurementScreenState extends ConsumerState<ReportMeasurementScree
       String resolvedSourceId = _selectedSourceId ?? (sources.isNotEmpty ? sources.first.id : 'ws-1');
       String resolvedSourceName = 'Water Source';
 
+      final (finalLat, finalLng) = _resolveCoordinates();
+
       if (_isNewSource) {
         resolvedSourceName = _newSourceNameController.text.trim();
         resolvedSourceId = 'src_${DateTime.now().millisecondsSinceEpoch}';
@@ -150,8 +354,8 @@ class _ReportMeasurementScreenState extends ConsumerState<ReportMeasurementScree
         tdsEc: tdsVal ?? 250.0,
         turbidity: turbVal ?? 2.0,
         temperature: tempVal ?? 26.0,
-        latitude: 6.9271,
-        longitude: 79.8612,
+        latitude: finalLat,
+        longitude: finalLng,
         timestamp: now,
         submittedBy: currentUser.displayName,
         source: 'community',
@@ -178,8 +382,8 @@ class _ReportMeasurementScreenState extends ConsumerState<ReportMeasurementScree
           id: resolvedSourceId,
           name: resolvedSourceName,
           type: WaterSourceType.other,
-          latitude: 6.9271,
-          longitude: 79.8612,
+          latitude: finalLat,
+          longitude: finalLng,
           createdBy: currentUser.displayName,
           createdAt: now,
           lastReadingAt: now,
@@ -193,6 +397,8 @@ class _ReportMeasurementScreenState extends ConsumerState<ReportMeasurementScree
               : 'Community monitored water point',
         );
         await waterSourceRepo.addWaterSource(newSource);
+        // Automatically set the new source as active
+        ref.read(selectedSourceIdProvider.notifier).setSourceId(resolvedSourceId);
       }
 
       await reportRepo.submitObservation(
@@ -442,34 +648,114 @@ class _ReportMeasurementScreenState extends ConsumerState<ReportMeasurementScree
                 ],
                 const SizedBox(height: 16),
 
-                // GPS Location with Auto-detect button
+                // Location Coordinates & Interactive Map Selection
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'GPS Location Coordinates',
+                      'Location & Coordinates',
                       style: (isDark ? AppTypography.darkCardTitle : AppTypography.cardTitle).copyWith(fontSize: 13.5),
                     ),
                     TextButton.icon(
                       onPressed: _isDetectingGps ? null : _handleGpsAutoDetect,
                       icon: _isDetectingGps
                           ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(Icons.my_location_rounded, size: 16, color: AppColors.primaryAqua),
+                          : const Icon(Icons.my_location_rounded, size: 15, color: AppColors.primaryAqua),
                       label: Text(
-                        _isDetectingGps ? 'Acquiring...' : 'Use Current GPS',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryAqua),
+                        _isDetectingGps ? 'Acquiring...' : 'Use GPS',
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppColors.primaryAqua),
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 6),
+
+                // Map & Preset Action Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.map_rounded, size: 16),
+                        label: const Text('Select on Map', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryDeepOcean,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onPressed: _showLocationPicker,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.place_outlined, size: 16),
+                        label: const Text('Choose City', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primaryAqua,
+                          side: const BorderSide(color: AppColors.primaryAqua),
+                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onPressed: _showKnownLocationsSheet,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                // Location badge if matched
+                if (_matchedLocationName != null) ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.teal.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.check_circle_rounded, size: 14, color: AppColors.teal),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Matched: $_matchedLocationName (${_selectedLatitude?.toStringAsFixed(4)}° N, ${_selectedLongitude?.toStringAsFixed(4)}° E)',
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              color: AppColors.teal,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
                 TextFormField(
                   controller: _locationController,
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.location_on_outlined, size: 20),
+                    hintText: 'e.g. 7.2906° N, 80.6337° E (Kandy)',
+                    helperText: 'Select on map, pick city, or type custom coordinates',
+                    helperStyle: const TextStyle(fontSize: 11),
                     fillColor: isDark ? AppColors.darkCardBackground : Colors.white,
                   ),
+                  onChanged: (val) {
+                    final regex = RegExp(r'([-+]?[0-9]*\.?[0-9]+)');
+                    final matches = regex.allMatches(val).toList();
+                    if (matches.length >= 2) {
+                      final lat = double.tryParse(matches[0].group(0) ?? '');
+                      final lng = double.tryParse(matches[1].group(0) ?? '');
+                      if (lat != null && lng != null) {
+                        _selectedLatitude = lat;
+                        _selectedLongitude = lng;
+                      }
+                    }
+                  },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 18),
 
                 // Parameter Inputs
                 Row(

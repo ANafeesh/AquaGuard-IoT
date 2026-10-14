@@ -53,6 +53,8 @@ class _InteractiveMapWidgetState extends State<InteractiveMapWidget>
         return const Offset(0.60, 0.18);
       case 'ws-5': // Village Water Point
         return const Offset(0.20, 0.82);
+      case 'ws-kandy': // Kandy Lake
+        return const Offset(0.55, 0.45);
       default:
         return const Offset(0.5, 0.5);
     }

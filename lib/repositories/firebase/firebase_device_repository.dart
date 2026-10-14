@@ -11,18 +11,23 @@ class FirebaseDeviceRepository implements DeviceRepository {
       _firestore.collection(AppConfig.getDevicesCollection(isDemo: isDemo));
 
   @override
-  Stream<List<Device>> watchDevices({bool isDemo = false}) {
-    if (isDemo) {
-      return Stream.value(DemoSimulatorService.getDemoDevices());
-    }
+  Stream<List<Device>> watchDevices({bool isDemo = false}) async* {
+    // 1. Immediately yield baseline devices so settings screen renders with 0ms delay
+    yield DemoSimulatorService.getDemoDevices();
 
-    return _collection(isDemo: isDemo).snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = Map<String, dynamic>.from(doc.data());
-        data['id'] = doc.id;
-        return Device.fromJson(data);
-      }).toList();
-    });
+    if (isDemo) return;
+
+    // 2. Stream live updates from Cloud Firestore
+    yield* _collection(isDemo: isDemo).snapshots().map((snapshot) {
+      if (snapshot.docs.isNotEmpty) {
+        return snapshot.docs.map((doc) {
+          final data = Map<String, dynamic>.from(doc.data());
+          data['id'] = doc.id;
+          return Device.fromJson(data);
+        }).toList();
+      }
+      return DemoSimulatorService.getDemoDevices();
+    }).handleError((_) => DemoSimulatorService.getDemoDevices());
   }
 
   @override

@@ -4,6 +4,7 @@ import '../../core/config/app_config.dart';
 import '../../models/measurement.dart';
 import '../../models/reading_log_entry.dart';
 import '../../models/water_source.dart';
+import '../../data/mock_data.dart';
 import '../reading_repository.dart';
 
 class FirebaseReadingRepository implements ReadingRepository {
@@ -12,14 +13,35 @@ class FirebaseReadingRepository implements ReadingRepository {
   CollectionReference<Map<String, dynamic>> get _collection =>
       _firestore.collection(AppConfig.getMeasurementsCollection());
 
+  List<ParameterReading> _getInitialReadings(String waterSourceId) {
+    try {
+      final source = MockData.waterSources.firstWhere(
+        (s) => s.id == waterSourceId,
+        orElse: () => MockData.activeSource,
+      );
+      return [
+        ParameterReading.fromType(type: ParameterType.ph, value: source.ph),
+        ParameterReading.fromType(type: ParameterType.tds, value: source.tdsEc),
+        ParameterReading.fromType(type: ParameterType.turbidity, value: source.turbidity),
+        ParameterReading.fromType(type: ParameterType.temperature, value: source.temperature),
+      ];
+    } catch (_) {
+      return MockData.getLakeViewReadings();
+    }
+  }
+
   @override
-  Stream<List<ParameterReading>> watchLatestReadings(String waterSourceId) {
+  Stream<List<ParameterReading>> watchLatestReadings(String waterSourceId) async* {
+    // 1. Yield baseline data immediately so UI renders in 0ms without spinning loaders
+    yield _getInitialReadings(waterSourceId);
+
+    // 2. Stream live updates from Cloud Firestore
     Query<Map<String, dynamic>> query = _collection;
     if (waterSourceId.isNotEmpty) {
       query = query.where('sourceId', isEqualTo: waterSourceId);
     }
 
-    return query
+    yield* query
         .snapshots()
         .map((snapshot) {
       if (snapshot.docs.isNotEmpty) {
@@ -47,10 +69,9 @@ class FirebaseReadingRepository implements ReadingRepository {
         ];
       }
 
-      // Return empty list if source has not yet received telemetry
-      return <ParameterReading>[];
+      return _getInitialReadings(waterSourceId);
     }).handleError((error) {
-      return <ParameterReading>[];
+      return _getInitialReadings(waterSourceId);
     });
   }
 

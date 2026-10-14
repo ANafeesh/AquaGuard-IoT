@@ -1529,6 +1529,21 @@
         statusLabel: 'Within Typical Range',
         lastUpdated: '5m ago',
         description: 'Protected catchment basin supplying regional environmental monitoring.'
+      },
+      {
+        id: 'src_kandy_05',
+        name: 'Kandy Lake (Bogambara)',
+        type: 'lake',
+        lat: 7.2906,
+        lng: 80.6337,
+        ph: 7.30,
+        tds: 245,
+        turbidity: 2.9,
+        temperature: 25.4,
+        status: 'withinTypicalRange',
+        statusLabel: 'Within Typical Range',
+        lastUpdated: '8m ago',
+        description: 'Historical urban lake and freshwater basin in the heart of Kandy, Central Province.'
       }
     ];
 
@@ -2001,9 +2016,11 @@
         return;
       }
 
-      leafletMap = L.map('leaflet-map').setView([6.9320, 79.8620], 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
+      leafletMap = L.map('leaflet-map').setView([7.2906, 80.6337], 12);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_4kmk_1_1b7de93d697ccefbed78fb0e', {
+        attribution: '&copy; CartoDB &copy; OpenStreetMap contributors',
+        subdomains: 'abcd',
+        maxZoom: 19
       }).addTo(leafletMap);
 
       renderMapMarkers(waterSources);

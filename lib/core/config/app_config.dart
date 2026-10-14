@@ -7,8 +7,20 @@ class AppConfig {
   /// Whether to force in-memory/mock repository implementations
   static bool useMockData = false;
 
-  /// Whether Firebase was successfully initialized at application startup
+  /// Whether Firebase was successfully initialized at startup
   static bool isFirebaseInitialized = false;
+
+  /// CARTO Basemaps API key to remove watermark from map tiles.
+  /// Free registration at: https://carto.com/basemaps/apikey/
+  static const String cartoApiKey = 'cb1_4kmk_1_1b7de93d697ccefbed78fb0e';
+
+  /// Generates the map tile URL with optional CARTO API key
+  static String getMapTileUrl({required bool isDark}) {
+    final base = isDark
+        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+        : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png';
+    return cartoApiKey.isNotEmpty ? '$base?key=$cartoApiKey' : base;
+  }
 
   /// Regulatory limitations and project purpose statement
   static const String limitationsStatement =

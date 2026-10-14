@@ -146,4 +146,33 @@ void main() {
     expect(observations.isNotEmpty, isTrue);
     expect(observations.first.ph, 7.35);
   });
+
+  testWidgets('ReportMeasurementScreen provides Select on Map and Choose City buttons', (WidgetTester tester) async {
+    await tester.pumpWidget(createReportWidget());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Select on Map'), findsOneWidget);
+    expect(find.text('Choose City'), findsOneWidget);
+    expect(find.text('Use GPS'), findsOneWidget);
+  });
+
+  testWidgets('Selecting New Water Source and typing Kandy auto-detects Kandy coordinates', (WidgetTester tester) async {
+    await tester.pumpWidget(createReportWidget());
+    await tester.pumpAndSettle();
+
+    // Select New Water Source
+    final newSourceChip = find.text('New Water Source');
+    await tester.tap(newSourceChip);
+    await tester.pumpAndSettle();
+
+    // Type "Kandy" in new source name field
+    final sourceNameField = find.widgetWithText(TextFormField, 'New Water Source Name');
+    expect(sourceNameField, findsOneWidget);
+    await tester.enterText(sourceNameField, 'Kandy Lake');
+    await tester.pumpAndSettle();
+
+    // Verify auto-detected Kandy coordinates appear
+    expect(find.textContaining('7.2906° N, 80.6337° E'), findsOneWidget);
+    expect(find.textContaining('Matched: Kandy'), findsOneWidget);
+  });
 }

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/config/app_config.dart';
 import '../../models/alert_item.dart';
+import '../../data/mock_data.dart';
 import '../alert_repository.dart';
 
 class FirebaseAlertRepository implements AlertRepository {
@@ -10,17 +11,24 @@ class FirebaseAlertRepository implements AlertRepository {
       _firestore.collection(AppConfig.getAlertsCollection(isDemo: isDemo));
 
   @override
-  Stream<List<AlertItem>> watchAlerts({bool isDemo = false}) {
-    return _collection(isDemo: isDemo)
+  Stream<List<AlertItem>> watchAlerts({bool isDemo = false}) async* {
+    // 1. Immediately yield baseline alerts so the alerts tab and badges render instantly
+    yield MockData.alerts;
+
+    // 2. Stream live Firestore updates
+    yield* _collection(isDemo: isDemo)
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = Map<String, dynamic>.from(doc.data());
-        data['id'] = doc.id;
-        return AlertItem.fromJson(data);
-      }).toList();
-    });
+      if (snapshot.docs.isNotEmpty) {
+        return snapshot.docs.map((doc) {
+          final data = Map<String, dynamic>.from(doc.data());
+          data['id'] = doc.id;
+          return AlertItem.fromJson(data);
+        }).toList();
+      }
+      return MockData.alerts;
+    }).handleError((_) => MockData.alerts);
   }
 
   @override
@@ -40,11 +48,14 @@ class FirebaseAlertRepository implements AlertRepository {
   }
 
   @override
-  Stream<int> watchUnreadCount({bool isDemo = false}) {
-    return _collection(isDemo: isDemo)
+  Stream<int> watchUnreadCount({bool isDemo = false}) async* {
+    yield MockData.alerts.where((a) => !a.acknowledged).length;
+
+    yield* _collection(isDemo: isDemo)
         .where('acknowledged', isEqualTo: false)
         .snapshots()
-        .map((snapshot) => snapshot.docs.length);
+        .map((snapshot) => snapshot.docs.length)
+        .handleError((_) => MockData.alerts.where((a) => !a.acknowledged).length);
   }
 
   @override

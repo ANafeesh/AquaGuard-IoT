@@ -70,8 +70,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     _introController.forward();
 
-    // Auto navigate after 2.5 seconds (or tap anywhere to skip)
-    _navTimer = Timer(const Duration(milliseconds: 2500), _navigateToNext);
+    // Auto navigate after 1.2 seconds (or tap anywhere to skip immediately)
+    _navTimer = Timer(const Duration(milliseconds: 1200), _navigateToNext);
   }
 
   @override

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../core/constants/app_colors.dart';
+import '../core/config/app_config.dart';
 import '../core/constants/app_typography.dart';
 import '../models/water_source.dart';
 import '../providers/app_state_providers.dart';
@@ -230,6 +231,138 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
+  void _fitAllSources(List<WaterSource> sources) {
+    if (sources.isEmpty) return;
+    if (sources.length == 1) {
+      _mapController.move(
+        LatLng(sources.first.latitude, sources.first.longitude),
+        14.0,
+      );
+      return;
+    }
+
+    double minLat = sources.first.latitude;
+    double maxLat = sources.first.latitude;
+    double minLng = sources.first.longitude;
+    double maxLng = sources.first.longitude;
+
+    for (final s in sources) {
+      if (s.latitude < minLat) minLat = s.latitude;
+      if (s.latitude > maxLat) maxLat = s.latitude;
+      if (s.longitude < minLng) minLng = s.longitude;
+      if (s.longitude > maxLng) maxLng = s.longitude;
+    }
+
+    final center = LatLng((minLat + maxLat) / 2, (minLng + maxLng) / 2);
+    final dLat = (maxLat - minLat).abs();
+    final dLng = (maxLng - minLng).abs();
+    final maxSpan = dLat > dLng ? dLat : dLng;
+
+    double zoom = 12.0;
+    if (maxSpan > 2.0) {
+      zoom = 7.5;
+    } else if (maxSpan > 1.0) {
+      zoom = 8.5;
+    } else if (maxSpan > 0.4) {
+      zoom = 9.5;
+    } else if (maxSpan > 0.1) {
+      zoom = 11.0;
+    }
+
+    _mapController.move(center, zoom);
+  }
+
+  void _showAddSourceAtLocationSheet(LatLng point) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppColors.darkCardBackground : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 38,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    const Icon(Icons.pin_drop_rounded, color: AppColors.primaryAqua, size: 22),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Selected Map Coordinate',
+                            style: (isDark ? AppTypography.darkCardTitle : AppTypography.cardTitle)
+                                .copyWith(fontSize: 15),
+                          ),
+                          Text(
+                            '${point.latitude.toStringAsFixed(4)}° N, ${point.longitude.toStringAsFixed(4)}° E',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.secondaryText,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.add_location_alt_rounded, size: 18),
+                    label: const Text(
+                      'Add Water Source Here',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryDeepOcean,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ReportMeasurementScreen(
+                            initialLatitude: point.latitude,
+                            initialLongitude: point.longitude,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -237,6 +370,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final activeSource = ref.watch(activeWaterSourceProvider);
     final savedSourceIds = ref.watch(savedSourceIdsProvider);
     final currentMapStyle = ref.watch(userPreferencesProvider).mapStyle;
+
+    // Reactively fly map camera when active source changes
+    ref.listen<WaterSource?>(activeWaterSourceProvider, (previous, next) {
+      if (next != null && (previous == null || previous.id != next.id)) {
+        _mapController.move(LatLng(next.latitude, next.longitude), 14.0);
+      }
+    });
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.mainBackground,
@@ -253,22 +393,27 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
             return Stack(
               children: [
-                // Interactive Map Layer (OpenStreetMap Flutter Map or Vector Canvas)
+                // Interactive Map Layer (OpenStreetMap / CartoDB Flutter Map or Vector Canvas)
                 if (_useOpenStreetMap && allSources.isNotEmpty)
                   FlutterMap(
                     mapController: _mapController,
                     options: MapOptions(
                       initialCenter: LatLng(
-                        selected?.latitude ?? 6.9271,
-                        selected?.longitude ?? 79.8612,
+                        selected?.latitude ?? 7.2906,
+                        selected?.longitude ?? 80.6337,
                       ),
                       initialZoom: 13.0,
                       minZoom: 4.0,
                       maxZoom: 18.0,
+                      onLongPress: (tapPosition, point) {
+                        _showAddSourceAtLocationSheet(point);
+                      },
                     ),
                     children: [
+                      // High-speed CDN CartoDB Voyager / Dark tiles
                       TileLayer(
-                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        urlTemplate: AppConfig.getMapTileUrl(isDark: isDark),
+                        subdomains: const ['a', 'b', 'c', 'd'],
                         userAgentPackageName: 'io.aquaguard.app',
                         errorTileCallback: (tile, error, stackTrace) {},
                       ),
@@ -284,6 +429,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                             child: GestureDetector(
                               onTap: () {
                                 ref.read(selectedSourceIdProvider.notifier).setSourceId(source.id);
+                                _mapController.move(
+                                  LatLng(source.latitude, source.longitude),
+                                  14.0,
+                                );
                                 _showSourceBottomSheet(source);
                               },
                               child: AnimatedContainer(
@@ -356,7 +505,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                             Expanded(
                               child: TextField(
                                 controller: _searchController,
-                                onChanged: (_) => setState(() {}),
+                                onChanged: (val) {
+                                  setState(() {});
+                                  if (val.trim().length >= 3) {
+                                    final matches = _applyFilter(allSources);
+                                    if (matches.isNotEmpty) {
+                                      final target = matches.first;
+                                      ref.read(selectedSourceIdProvider.notifier).setSourceId(target.id);
+                                      _mapController.move(LatLng(target.latitude, target.longitude), 13.5);
+                                    }
+                                  }
+                                },
                                 decoration: const InputDecoration(
                                   hintText: 'Search river, well, reservoir...',
                                   border: InputBorder.none,
@@ -418,6 +577,20 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         ),
                       ),
                     ],
+                  ),
+                ),
+
+                // Fit All Water Sources Button (Kandy, Colombo, etc.)
+                Positioned(
+                  right: 16,
+                  bottom: selected != null ? 336 : 130,
+                  child: FloatingActionButton.small(
+                    heroTag: 'fit_all_sources',
+                    tooltip: 'Fit all sources (Kandy, Colombo, etc.)',
+                    backgroundColor: isDark ? AppColors.darkCardBackground : Colors.white,
+                    foregroundColor: AppColors.teal,
+                    child: const Icon(Icons.zoom_out_map_rounded, size: 18),
+                    onPressed: () => _fitAllSources(visibleSources),
                   ),
                 ),
 

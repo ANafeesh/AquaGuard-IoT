@@ -89,6 +89,22 @@ class MockData {
       status: WaterQualityStatus.noRecentData,
       description: 'Public tap and spring outlet maintained by village environmental group.',
     ),
+    WaterSource(
+      id: 'ws-kandy',
+      name: 'Kandy Lake (Bogambara)',
+      type: WaterSourceType.lake,
+      latitude: 7.2906,
+      longitude: 80.6337,
+      createdBy: 'system_admin',
+      createdAt: DateTime(2026, 1, 1),
+      lastReadingAt: DateTime.now().subtract(const Duration(minutes: 8)),
+      ph: 7.3,
+      tdsEc: 245.0,
+      turbidity: 2.9,
+      temperature: 25.4,
+      status: WaterQualityStatus.withinTypicalRange,
+      description: 'Historical urban lake and freshwater basin in the heart of Kandy, Central Province.',
+    ),
   ];
 
   // Default active water source

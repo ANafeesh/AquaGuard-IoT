@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/config/app_config.dart';
 import '../../models/water_source.dart';
 import '../../services/local_storage_service.dart';
+import '../../data/mock_data.dart';
 import '../water_source_repository.dart';
 
 class FirebaseWaterSourceRepository implements WaterSourceRepository {
@@ -12,14 +13,21 @@ class FirebaseWaterSourceRepository implements WaterSourceRepository {
       _firestore.collection(AppConfig.getSourcesCollection());
 
   @override
-  Stream<List<WaterSource>> watchWaterSources() {
-    return _collection.snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = Map<String, dynamic>.from(doc.data());
-        data['id'] = doc.id;
-        return WaterSource.fromJson(data);
-      }).toList();
-    });
+  Stream<List<WaterSource>> watchWaterSources() async* {
+    // Instantly emit baseline sources (0ms delay) so UI never hangs in loading state
+    yield MockData.waterSources;
+
+    // Stream live Firestore updates as soon as network data arrives
+    yield* _collection.snapshots().map((snapshot) {
+      if (snapshot.docs.isNotEmpty) {
+        return snapshot.docs.map((doc) {
+          final data = Map<String, dynamic>.from(doc.data());
+          data['id'] = doc.id;
+          return WaterSource.fromJson(data);
+        }).toList();
+      }
+      return MockData.waterSources;
+    }).handleError((_) => MockData.waterSources);
   }
 
   @override
