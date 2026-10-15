@@ -374,7 +374,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     // Reactively fly map camera when active source changes
     ref.listen<WaterSource?>(activeWaterSourceProvider, (previous, next) {
       if (next != null && (previous == null || previous.id != next.id)) {
-        _mapController.move(LatLng(next.latitude, next.longitude), 14.0);
+        try {
+          _mapController.move(LatLng(next.latitude, next.longitude), 14.0);
+        } catch (_) {}
       }
     });
 

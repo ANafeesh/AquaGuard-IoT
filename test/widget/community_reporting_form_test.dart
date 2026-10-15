@@ -172,7 +172,6 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify auto-detected Kandy coordinates appear
-    expect(find.textContaining('7.2906° N, 80.6337° E'), findsOneWidget);
-    expect(find.textContaining('Matched: Kandy'), findsOneWidget);
+    expect(find.textContaining('Matched: Kandy (7.2906° N, 80.6337° E)'), findsOneWidget);
   });
 }

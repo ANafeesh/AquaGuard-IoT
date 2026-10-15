@@ -13,6 +13,23 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == uid;
     }
 
+    // Checks if caller is a trusted IoT backend ingestion service or gateway
+    function isTrustedGateway() {
+      return isAuthenticated() && (
+        request.auth.token.role == 'device_gateway' || 
+        request.auth.token.role == 'admin' ||
+        request.auth.token.isDevice == true
+      );
+    }
+
+    // Checks if a hardware device ID is available or already belongs to the current user
+    function isDeviceClaimable(deviceId, ownerUid) {
+      return deviceId == null ||
+             deviceId == '' ||
+             !exists(/databases/$(database)/documents/devices/$(deviceId)) ||
+             get(/databases/$(database)/documents/devices/$(deviceId)).data.ownerUid == ownerUid;
+    }
+
     // ---------------------------------------------------------
     // Water Sources: sources/{sourceId}
     // Authenticated users can read all sources.
@@ -33,14 +50,19 @@ service cloud.firestore {
 
     // ---------------------------------------------------------
     // Measurements: measurements/{measurementId}
-    // Authenticated users can read all water quality measurements.
+    // Authenticated users can read all public water quality measurements.
     // Citizens can create records where submittedBy equals their UID.
-    // IoT devices can create records where source equals 'device'.
+    // Authorized IoT devices or ingestion gateways can submit genuine device telemetry.
+    // Untrusted source == 'device' is NEVER accepted as proof of identity.
     // ---------------------------------------------------------
     match /measurements/{measurementId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated()
-                    && (request.resource.data.submittedBy == request.auth.uid || request.resource.data.source == 'device')
+                    && (
+                      request.resource.data.submittedBy == request.auth.uid ||
+                      (request.resource.data.deviceId != null && request.auth.uid == request.resource.data.deviceId) ||
+                      isTrustedGateway()
+                    )
                     && request.resource.data.source in ['device', 'community']
                     && request.resource.data.ph is number
                     && request.resource.data.tdsEc is number
@@ -48,7 +70,8 @@ service cloud.firestore {
                     && request.resource.data.temperature is number;
       allow update, delete: if isAuthenticated() && (
         resource.data.submittedBy == request.auth.uid ||
-        resource.data.source == 'device'
+        (resource.data.deviceId != null && request.auth.uid == resource.data.deviceId) ||
+        isTrustedGateway()
       );
     }
 
@@ -56,12 +79,13 @@ service cloud.firestore {
     // Devices: devices/{deviceId}
     // Authenticated users can view registered hardware nodes.
     // Device owners can register, update, and manage their devices.
+    // Ownership cannot be transferred to a different user.
     // ---------------------------------------------------------
     match /devices/{deviceId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.resource.data.ownerUid == request.auth.uid;
       allow update: if isAuthenticated() && (
-        resource.data.ownerUid == request.auth.uid ||
+        (resource.data.ownerUid == request.auth.uid && request.resource.data.ownerUid == resource.data.ownerUid) ||
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastSeenAt'])
       );
       allow delete: if isAuthenticated() && resource.data.ownerUid == request.auth.uid;
@@ -102,6 +126,59 @@ service cloud.firestore {
       );
     }
 
+    // ---------------------------------------------------------
+    // Private Home Tanks: home_tanks/{tankId}
+    // Strictly private: Visible and editable ONLY by the tank owner.
+    // Exact installation coordinates and tank telemetry are NEVER
+    // exposed to other users, public queries, or community maps.
+    // Ownership cannot be altered or hijacked by any other client.
+    // Users cannot associate an ESP32 device already owned by another user.
+    // ---------------------------------------------------------
+    match /home_tanks/{tankId} {
+      allow read: if isAuthenticated() && resource.data.ownerUid == request.auth.uid;
+      allow create: if isAuthenticated()
+                    && request.resource.data.ownerUid == request.auth.uid
+                    && request.resource.data.visibility == 'private'
+                    && isDeviceClaimable(request.resource.data.deviceId, request.auth.uid);
+      allow update: if isAuthenticated()
+                    && resource.data.ownerUid == request.auth.uid
+                    && request.resource.data.ownerUid == resource.data.ownerUid
+                    && request.resource.data.visibility == 'private'
+                    && isDeviceClaimable(request.resource.data.deviceId, request.auth.uid);
+      allow delete: if isAuthenticated() && resource.data.ownerUid == request.auth.uid;
+
+      // Private sensor readings subcollection for home tanks
+      match /readings/{readingId} {
+        // Only tank owner, authorized registered device, or trusted ingestion service can read
+        allow read: if isAuthenticated() && (
+          get(/databases/$(database)/documents/home_tanks/$(tankId)).data.ownerUid == request.auth.uid ||
+          (get(/databases/$(database)/documents/home_tanks/$(tankId)).data.deviceId != null && 
+           request.auth.uid == get(/databases/$(database)/documents/home_tanks/$(tankId)).data.deviceId) ||
+          isTrustedGateway()
+        );
+
+        // Untrusted source == 'device' is NOT proof of device identity.
+        // Reading creation is restricted to verified owner, authenticated device UID, or trusted gateway.
+        allow create: if isAuthenticated()
+                      && (
+                        (get(/databases/$(database)/documents/home_tanks/$(tankId)).data.ownerUid == request.auth.uid
+                         && request.resource.data.ownerUid == request.auth.uid) ||
+                        (get(/databases/$(database)/documents/home_tanks/$(tankId)).data.deviceId != null && 
+                         request.auth.uid == get(/databases/$(database)/documents/home_tanks/$(tankId)).data.deviceId) ||
+                        isTrustedGateway()
+                      )
+                      && request.resource.data.ph is number
+                      && request.resource.data.tdsEc is number
+                      && request.resource.data.turbidity is number
+                      && request.resource.data.temperature is number;
+
+        allow update, delete: if isAuthenticated() && (
+          get(/databases/$(database)/documents/home_tanks/$(tankId)).data.ownerUid == request.auth.uid ||
+          isTrustedGateway()
+        );
+      }
+    }
+
     // =========================================================
     // DEMO MODE COLLECTIONS (Prefix: demo_)
     // Separates demo simulation datasets from production data.
@@ -124,6 +201,27 @@ service cloud.firestore {
 
     match /demo_observations/{observationId} {
       allow read, write: if isAuthenticated();
+    }
+
+    match /demo_home_tanks/{tankId} {
+      allow read: if isAuthenticated() && resource.data.ownerUid == request.auth.uid;
+      allow create: if isAuthenticated()
+                    && request.resource.data.ownerUid == request.auth.uid
+                    && request.resource.data.visibility == 'private'
+                    && isDeviceClaimable(request.resource.data.deviceId, request.auth.uid);
+      allow update: if isAuthenticated()
+                    && resource.data.ownerUid == request.auth.uid
+                    && request.resource.data.ownerUid == resource.data.ownerUid
+                    && isDeviceClaimable(request.resource.data.deviceId, request.auth.uid);
+      allow delete: if isAuthenticated() && resource.data.ownerUid == request.auth.uid;
+
+      match /readings/{readingId} {
+        allow read, write: if isAuthenticated()
+                           && (
+                             get(/databases/$(database)/documents/demo_home_tanks/$(tankId)).data.ownerUid == request.auth.uid ||
+                             isTrustedGateway()
+                           );
+      }
     }
   }
 }

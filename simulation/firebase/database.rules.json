@@ -1,0 +1,15 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        "readings": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid",
+          "$readingId": {
+            ".validate": "newData.hasChildren(['sourceId', 'sequence', 'ph', 'tdsEc', 'turbidity', 'temperature', 'timestampMs', 'status', 'anomaly', 'simulated'])"
+          }
+        }
+      }
+    }
+  }
+}

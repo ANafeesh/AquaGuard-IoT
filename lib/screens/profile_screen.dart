@@ -11,6 +11,7 @@ import 'profile/my_observations_screen.dart';
 import 'profile/saved_water_sources_screen.dart';
 import 'info/help_guide_screen.dart';
 import 'info/about_app_screen.dart';
+import '../features/tanks/screens/my_home_tanks_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   final VoidCallback? onToggleOffline;
@@ -224,6 +225,19 @@ class ProfileScreen extends ConsumerWidget {
               const SizedBox(height: 24),
 
               // Menu Sections - all leading to real screens
+              _menuItem(
+                icon: Icons.shield_outlined,
+                title: 'My Home Tanks',
+                subtitle: 'Private residential water tanks & IoT telemetry',
+                badgeText: 'Private',
+                isDark: isDark,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const MyHomeTanksScreen()),
+                  );
+                },
+              ),
               _menuItem(
                 icon: Icons.assignment_outlined,
                 title: 'My Observations',

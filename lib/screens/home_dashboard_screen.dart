@@ -20,6 +20,10 @@ import '../features/history/widgets/fl_parameter_chart.dart';
 import '../core/animations/animations.dart';
 import 'profile_screen.dart';
 import '../services/firebase_seed_service.dart';
+import '../features/tanks/providers/home_tank_providers.dart';
+import '../features/tanks/screens/my_home_tanks_screen.dart';
+import '../features/tanks/screens/register_tank_screen.dart';
+import '../features/tanks/widgets/home_tank_card.dart';
 
 class HomeDashboardScreen extends ConsumerStatefulWidget {
   final Function(int tabIndex)? onNavigateToTab;
@@ -64,6 +68,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
     ref.invalidate(alertsStreamProvider);
     ref.invalidate(unreadAlertsCountProvider);
     ref.invalidate(observationsStreamProvider);
+    ref.invalidate(userHomeTanksStreamProvider);
     await _loadHistoricalTrends();
   }
 
@@ -77,6 +82,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
     final alertsAsync = ref.watch(alertsStreamProvider);
     final userAsync = ref.watch(currentUserProvider);
     final prefs = ref.watch(userPreferencesProvider);
+    final tanksAsync = ref.watch(userHomeTanksStreamProvider);
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.mainBackground,
@@ -278,9 +284,165 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                     ),
                     const SizedBox(height: 18),
 
-                    // SUMMARY CARDS FOR THE LATEST READING FROM EACH MONITORED SOURCE
+                    // MY HOME TANKS SECTION (Private residential water tanks)
                     FadeSlideEntrance(
                       index: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      'My Home Tanks',
+                                      style: (isDark ? AppTypography.darkSectionHeading : AppTypography.sectionHeading)
+                                          .copyWith(fontSize: 17),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF59E0B).withValues(alpha: 0.14),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                                          width: 0.8,
+                                        ),
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.lock_rounded, size: 10.5, color: Color(0xFFD97706)),
+                                          SizedBox(width: 3.5),
+                                          Text(
+                                            'Private',
+                                            style: TextStyle(
+                                              fontSize: 10.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xFFB45309),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Row(
+                                  children: [
+                                    TextButton.icon(
+                                      icon: const Icon(Icons.add_rounded, size: 16),
+                                      label: const Text('Add Tank', style: TextStyle(fontSize: 12.5)),
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (ctx) => const RegisterTankScreen()),
+                                        );
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                                      tooltip: 'View All Home Tanks',
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (ctx) => const MyHomeTanksScreen()),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          tanksAsync.when(
+                            loading: () => const SizedBox(
+                              height: 70,
+                              child: Center(child: CircularProgressIndicator(color: AppColors.teal)),
+                            ),
+                            error: (e, _) => const SizedBox.shrink(),
+                            data: (tanks) {
+                              if (tanks.isEmpty) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: isDark ? AppColors.darkCardBackground : Colors.white,
+                                      borderRadius: BorderRadius.circular(18),
+                                      border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.teal.withValues(alpha: 0.12),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: const Icon(Icons.shield_rounded, color: AppColors.teal, size: 24),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Deploy AquaGuard at Home',
+                                                style: (isDark ? AppTypography.darkCardTitle : AppTypography.cardTitle)
+                                                    .copyWith(fontSize: 14.5, fontWeight: FontWeight.w700),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                'Monitor your overhead or underground water tank. Private & hidden from public map.',
+                                                style: (isDark ? AppTypography.darkSecondary : AppTypography.secondary)
+                                                    .copyWith(fontSize: 11.5),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: AppColors.teal,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                          ),
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(builder: (ctx) => const RegisterTankScreen()),
+                                            );
+                                          },
+                                          child: const Text('Add Tank', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              return Column(
+                                children: tanks.map((tank) => HomeTankCard(
+                                  tank: tank,
+                                  onRefresh: () => ref.invalidate(userHomeTanksStreamProvider),
+                                )).toList(),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+
+                    // SUMMARY CARDS FOR THE LATEST READING FROM EACH MONITORED SOURCE
+                    FadeSlideEntrance(
+                      index: 4,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

@@ -6,19 +6,21 @@ import '../repositories/alert_repository.dart';
 import '../repositories/report_repository.dart';
 import '../repositories/auth_repository.dart';
 import '../repositories/device_repository.dart';
+import '../repositories/home_tank_repository.dart';
 import '../repositories/mock/mock_water_source_repository.dart';
 import '../repositories/mock/mock_reading_repository.dart';
 import '../repositories/mock/mock_alert_repository.dart';
 import '../repositories/mock/mock_report_repository.dart';
 import '../repositories/mock/mock_auth_repository.dart';
 import '../repositories/mock/mock_device_repository.dart';
+import '../repositories/mock/mock_home_tank_repository.dart';
 import '../repositories/firebase/firebase_water_source_repository.dart';
 import '../repositories/firebase/firebase_reading_repository.dart';
 import '../repositories/firebase/firebase_alert_repository.dart';
 import '../repositories/firebase/firebase_report_repository.dart';
 import '../repositories/firebase/firebase_auth_repository.dart';
-
 import '../repositories/firebase/firebase_device_repository.dart';
+import '../repositories/firebase/firebase_home_tank_repository.dart';
 
 /// Provider for WaterSourceRepository
 final waterSourceRepositoryProvider = Provider<WaterSourceRepository>((ref) {
@@ -67,3 +69,12 @@ final deviceRepositoryProvider = Provider<DeviceRepository>((ref) {
   }
   return FirebaseDeviceRepository();
 });
+
+/// Provider for HomeTankRepository
+final homeTankRepositoryProvider = Provider<HomeTankRepository>((ref) {
+  if (AppConfig.useMockData || !AppConfig.isFirebaseInitialized) {
+    return MockHomeTankRepository();
+  }
+  return FirebaseHomeTankRepository();
+});
+

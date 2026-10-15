@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "author": "404 Found - AquaGuard",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 30,
+      "left": 40,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "phPot",
+      "top": -95,
+      "left": -250,
+      "attrs": { "value": "530" }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "tdsPot",
+      "top": 45,
+      "left": -250,
+      "attrs": { "value": "358" }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "turbidityPot",
+      "top": 185,
+      "left": -250,
+      "attrs": { "value": "26" }
+    },
+    {
+      "type": "wokwi-ds18b20",
+      "id": "tempSensor",
+      "top": 350,
+      "left": -230,
+      "attrs": { "temperature": "27" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "pullup",
+      "top": 420,
+      "left": -90,
+      "attrs": { "value": "4700" }
+    },
+    {
+      "type": "wokwi-gps",
+      "id": "gps",
+      "top": 300,
+      "left": 270,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-buzzer",
+      "id": "buzzer",
+      "top": 420,
+      "left": 90,
+      "attrs": { "mode": "smooth", "volume": "0.5" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "alarmLed",
+      "top": 430,
+      "left": 350,
+      "attrs": { "color": "red" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "ledResistor",
+      "top": 490,
+      "left": 350,
+      "attrs": { "value": "220" }
+    }
+  ],
+  "connections": [
+    ["phPot:VCC", "esp:3V3", "red", []],
+    ["phPot:GND", "esp:GND.1", "black", []],
+    ["phPot:SIG", "esp:36", "green", []],
+    ["tdsPot:VCC", "esp:3V3", "red", []],
+    ["tdsPot:GND", "esp:GND.1", "black", []],
+    ["tdsPot:SIG", "esp:39", "green", []],
+    ["turbidityPot:VCC", "esp:3V3", "red", []],
+    ["turbidityPot:GND", "esp:GND.1", "black", []],
+    ["turbidityPot:SIG", "esp:34", "green", []],
+    ["tempSensor:VCC", "esp:3V3", "red", []],
+    ["tempSensor:GND", "esp:GND.1", "black", []],
+    ["tempSensor:DQ", "esp:4", "blue", []],
+    ["pullup:1", "tempSensor:DQ", "blue", []],
+    ["pullup:2", "esp:3V3", "red", []],
+    ["gps:VCC", "esp:3V3", "red", []],
+    ["gps:GND", "esp:GND.1", "black", []],
+    ["gps:TX", "esp:16", "green", []],
+    ["gps:RX", "esp:17", "purple", []],
+    ["buzzer:1", "esp:GND.1", "black", []],
+    ["buzzer:2", "esp:25", "orange", []],
+    ["esp:26", "ledResistor:1", "orange", []],
+    ["ledResistor:2", "alarmLed:A", "red", []],
+    ["alarmLed:K", "esp:GND.1", "black", []]
+  ],
+  "dependencies": {}
+}
