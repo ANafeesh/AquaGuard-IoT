@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import '../../core/config/app_config.dart';
 import '../../models/measurement.dart';
 import '../../models/reading_log_entry.dart';
@@ -37,13 +38,16 @@ class FirebaseReadingRepository implements ReadingRepository {
 
     // 2. Stream live updates from Cloud Firestore
     Query<Map<String, dynamic>> query = _collection;
-    if (waterSourceId.isNotEmpty) {
+    if (waterSourceId == 'src_river_02' || waterSourceId == 'demo_src_river') {
+      query = query.where('sourceId', whereIn: ['src_river_02', 'demo_src_river']);
+    } else if (waterSourceId.isNotEmpty) {
       query = query.where('sourceId', isEqualTo: waterSourceId);
     }
 
     yield* query
         .snapshots()
         .map((snapshot) {
+      debugPrint('[Firestore Live] Query matched ${snapshot.docs.length} docs for $waterSourceId');
       if (snapshot.docs.isNotEmpty) {
         // Sort in memory by timestamp if available to avoid requiring composite Firestore index
         final docs = snapshot.docs.toList();
@@ -54,6 +58,8 @@ class FirebaseReadingRepository implements ReadingRepository {
         });
 
         final data = docs.first.data();
+        debugPrint('[Firestore Live] Latest doc for $waterSourceId: ph=${data['ph']}, tds=${data['tdsEc']}, turb=${data['turbidity']}, temp=${data['temperature']}, ts=${data['timestamp']}');
+
         final ph = (data['ph'] as num?)?.toDouble() ?? 7.0;
         final tds = (data['tdsEc'] as num?)?.toDouble() ??
             (data['tds'] as num?)?.toDouble() ??
@@ -71,6 +77,7 @@ class FirebaseReadingRepository implements ReadingRepository {
 
       return _getInitialReadings(waterSourceId);
     }).handleError((error) {
+      debugPrint('[Firestore Live Error] Error watching readings for $waterSourceId: $error');
       return _getInitialReadings(waterSourceId);
     });
   }

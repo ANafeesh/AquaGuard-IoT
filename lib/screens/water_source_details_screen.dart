@@ -5,6 +5,8 @@ import '../core/constants/app_typography.dart';
 import '../core/config/parameter_thresholds.dart';
 import '../core/widgets/disclaimer_banner.dart';
 import '../models/water_source.dart';
+import '../models/measurement.dart';
+import '../providers/app_state_providers.dart';
 import '../widgets/status_badge.dart';
 import 'history_screen.dart';
 import 'report_measurement_screen.dart';
@@ -171,64 +173,87 @@ class WaterSourceDetailsScreen extends ConsumerWidget {
               const SizedBox(height: 12),
 
               // 4 Detailed Metric Cards with status indicators
-              Row(
-                children: [
-                  Expanded(
-                    child: _metricCard(
-                      icon: Icons.water_drop_rounded,
-                      name: ParameterThresholds.phLabel,
-                      value: waterSource.ph?.toStringAsFixed(2) ?? '--',
-                      unit: 'Unitless',
-                      normalRange: '${ParameterThresholds.phMin} - ${ParameterThresholds.phMax}',
-                      status: waterSource.status,
-                      color: AppColors.primaryAqua,
-                      isDark: isDark,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _metricCard(
-                      icon: Icons.waves_rounded,
-                      name: ParameterThresholds.tdsLabel,
-                      value: '${waterSource.tds}',
-                      unit: ParameterThresholds.tdsUnit,
-                      normalRange: '${ParameterThresholds.tdsMin.toInt()} - ${ParameterThresholds.tdsMax.toInt()} ${ParameterThresholds.tdsUnit}',
-                      status: waterSource.status,
-                      color: AppColors.teal,
-                      isDark: isDark,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _metricCard(
-                      icon: Icons.remove_red_eye_outlined,
-                      name: ParameterThresholds.turbidityLabel,
-                      value: waterSource.turbidity?.toStringAsFixed(1) ?? '--',
-                      unit: ParameterThresholds.turbidityUnit,
-                      normalRange: '${ParameterThresholds.turbidityMin} - ${ParameterThresholds.turbidityMax} ${ParameterThresholds.turbidityUnit}',
-                      status: waterSource.status,
-                      color: const Color(0xFF0284C7),
-                      isDark: isDark,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _metricCard(
-                      icon: Icons.thermostat_rounded,
-                      name: ParameterThresholds.tempLabel,
-                      value: waterSource.temperature?.toStringAsFixed(1) ?? '--',
-                      unit: ParameterThresholds.tempUnit,
-                      normalRange: '${ParameterThresholds.tempMin.toInt()} - ${ParameterThresholds.tempMax.toInt()} ${ParameterThresholds.tempUnit}',
-                      status: waterSource.status,
-                      color: const Color(0xFFEA580C),
-                      isDark: isDark,
-                    ),
-                  ),
-                ],
+              Builder(
+                builder: (context) {
+                  final readingsAsync = ref.watch(latestReadingsProvider(waterSource.id));
+                  double phVal = waterSource.ph ?? 7.0;
+                  double tdsVal = waterSource.tds.toDouble();
+                  double turbVal = waterSource.turbidity ?? 2.0;
+                  double tempVal = waterSource.temperature ?? 25.0;
+
+                  readingsAsync.whenData((readings) {
+                    for (final r in readings) {
+                      if (r.type == ParameterType.ph) phVal = r.value;
+                      if (r.type == ParameterType.tds) tdsVal = r.value;
+                      if (r.type == ParameterType.turbidity) turbVal = r.value;
+                      if (r.type == ParameterType.temperature) tempVal = r.value;
+                    }
+                  });
+
+                  return Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _metricCard(
+                              icon: Icons.water_drop_rounded,
+                              name: ParameterThresholds.phLabel,
+                              value: phVal.toStringAsFixed(2),
+                              unit: 'Unitless',
+                              normalRange: '${ParameterThresholds.phMin} - ${ParameterThresholds.phMax}',
+                              status: waterSource.status,
+                              color: AppColors.primaryAqua,
+                              isDark: isDark,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _metricCard(
+                              icon: Icons.waves_rounded,
+                              name: ParameterThresholds.tdsLabel,
+                              value: tdsVal.toInt().toString(),
+                              unit: ParameterThresholds.tdsUnit,
+                              normalRange: '${ParameterThresholds.tdsMin.toInt()} - ${ParameterThresholds.tdsMax.toInt()} ${ParameterThresholds.tdsUnit}',
+                              status: waterSource.status,
+                              color: AppColors.teal,
+                              isDark: isDark,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _metricCard(
+                              icon: Icons.remove_red_eye_outlined,
+                              name: ParameterThresholds.turbidityLabel,
+                              value: turbVal.toStringAsFixed(1),
+                              unit: ParameterThresholds.turbidityUnit,
+                              normalRange: '${ParameterThresholds.turbidityMin} - ${ParameterThresholds.turbidityMax} ${ParameterThresholds.turbidityUnit}',
+                              status: waterSource.status,
+                              color: const Color(0xFF0284C7),
+                              isDark: isDark,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _metricCard(
+                              icon: Icons.thermostat_rounded,
+                              name: ParameterThresholds.tempLabel,
+                              value: tempVal.toStringAsFixed(1),
+                              unit: ParameterThresholds.tempUnit,
+                              normalRange: '${ParameterThresholds.tempMin.toInt()} - ${ParameterThresholds.tempMax.toInt()} ${ParameterThresholds.tempUnit}',
+                              status: waterSource.status,
+                              color: const Color(0xFFEA580C),
+                              isDark: isDark,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                },
               ),
               const SizedBox(height: 24),
 

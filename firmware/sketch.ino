@@ -28,8 +28,14 @@
 #include <HTTPClient.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
-#include <TinyGPSPlus.h>
 #include <time.h>
+
+// Set to 1 if you have a NEO-6M GPS module wired to GPIO 16/17 and TinyGPSPlus library installed
+#define ENABLE_GPS 0
+
+#if ENABLE_GPS
+#include <TinyGPSPlus.h>
+#endif
 
 // ==============================================================================
 // CONFIGURATION & CREDENTIALS
@@ -45,11 +51,12 @@ const char* FIREBASE_API_KEY      = "AIzaSyCfVyFmFrvELir5w9_2-_RZwZ-m8t-XMXE";
 const char* FIREBASE_AUTH_EMAIL   = "node-river@aquaguard.io";
 const char* FIREBASE_AUTH_PASS    = "NodeSecurePass123!";
 const char* DEVICE_ID             = "esp32_node_river_01";
-const char* WATER_SOURCE_ID       = "demo_src_river"; // Target monitored water source
-const char* WATER_SOURCE_NAME     = "Blue River Reach";
+const char* WATER_SOURCE_ID       = "src_river_02"; // Target monitored water source
+const char* WATER_SOURCE_NAME     = "Riverside Reach Station";
 
 // Firebase Auth Token Management
 String firebaseIdToken = "";
+String firebaseUid = "";
 unsigned long tokenExpiryTime = 0;
 
 // Sampling & Telemetry Timing
@@ -89,8 +96,10 @@ const float TURBIDITY_CLEAR_V = 4.20;
 // ==============================================================================
 OneWire oneWire(PIN_ONEWIRE_TEMP);
 DallasTemperature tempSensors(&oneWire);
+#if ENABLE_GPS
 HardwareSerial gpsSerial(2);
 TinyGPSPlus gps;
+#endif
 
 // Offline Packet Buffer Structure
 struct TelemetryPacket {
@@ -131,9 +140,11 @@ void setup() {
   int deviceCount = tempSensors.getDeviceCount();
   Serial.printf("Found %d sensor(s).\n", deviceCount);
 
+#if ENABLE_GPS
   // Initialize GPS HardwareSerial 2
   Serial.println("[INIT] Initializing NEO-6M GPS (9600 baud, RX:16, TX:17)...");
   gpsSerial.begin(9600, SERIAL_8N1, PIN_GPS_RX, PIN_GPS_TX);
+#endif
 
   // Connect to WiFi
   connectWiFi();
@@ -155,10 +166,12 @@ void setup() {
 // MAIN LOOP
 // ==============================================================================
 void loop() {
+#if ENABLE_GPS
   // Feed GPS parser with incoming serial stream
   while (gpsSerial.available() > 0) {
     gps.encode(gpsSerial.read());
   }
+#endif
 
   // Periodic telemetry cycle
   unsigned long now = millis();
@@ -257,14 +270,19 @@ float readTurbidity() {
 
 // GPS Coordinates & Timestamp Acquisition
 void getGPSData(double &lat, double &lng, unsigned long &epochTime) {
+#if ENABLE_GPS
   if (gps.location.isValid() && gps.location.age() < 10000) {
     lat = gps.location.lat();
     lng = gps.location.lng();
   } else {
-    // Default configured station reference coordinates
     lat = 6.9380; // Blue River Station
     lng = 79.8720;
   }
+#else
+  // Default configured station reference coordinates
+  lat = 6.9380; // Blue River Station
+  lng = 79.8720;
+#endif
 
   time_t nowSec;
   time(&nowSec);
@@ -353,9 +371,16 @@ bool refreshFirebaseAuthToken() {
       firebaseIdToken = response.substring(start, end);
       tokenExpiryTime = millis() + 3000000; // ~50 minutes
       Serial.println("[AUTH] Firebase Auth Bearer token acquired successfully.");
-      https.end();
-      return true;
     }
+    int uidIdx = response.indexOf("\"localId\": \"");
+    if (uidIdx != -1) {
+      int uStart = uidIdx + 12;
+      int uEnd = response.indexOf("\"", uStart);
+      firebaseUid = response.substring(uStart, uEnd);
+      Serial.printf("[AUTH] Authenticated as UID: %s\n", firebaseUid.c_str());
+    }
+    https.end();
+    return true;
   } else {
     Serial.printf("[AUTH] Auth sign-in returned code %d (fallback to API key)\n", httpCode);
   }
@@ -404,6 +429,8 @@ bool sendToFirestore(const TelemetryPacket &pkt) {
   struct tm *ti = gmtime(&rawTime);
   strftime(timeBuf, sizeof(timeBuf), "%Y-%m-%dT%H:%M:%SZ", ti);
 
+  String submitter = firebaseUid.length() > 0 ? firebaseUid : String(DEVICE_ID);
+
   // Construct Firestore document REST JSON payload
   String payload = "{\n  \"fields\": {\n";
   payload += "    \"sourceId\": {\"stringValue\": \"" + String(WATER_SOURCE_ID) + "\"},\n";
@@ -416,19 +443,22 @@ bool sendToFirestore(const TelemetryPacket &pkt) {
   payload += "    \"latitude\": {\"doubleValue\": " + String(pkt.latitude, 5) + "},\n";
   payload += "    \"longitude\": {\"doubleValue\": " + String(pkt.longitude, 5) + "},\n";
   payload += "    \"timestamp\": {\"stringValue\": \"" + String(timeBuf) + "\"},\n";
-  payload += "    \"submittedBy\": {\"stringValue\": \"ESP32 Device Node\"},\n";
+  payload += "    \"submittedBy\": {\"stringValue\": \"" + submitter + "\"},\n";
   payload += "    \"source\": {\"stringValue\": \"device\"},\n";
   payload += "    \"syncedAt\": {\"stringValue\": \"" + String(timeBuf) + "\"},\n";
   payload += "    \"notes\": {\"stringValue\": \"" + String(pkt.isAnomaly ? "Unusual measurement detected by node" : "Routine telemetry packet") + "\"}\n";
   payload += "  }\n}";
 
+  Serial.printf("[FIRESTORE] Uploading reading for '%s' (%s)...\n", WATER_SOURCE_NAME, WATER_SOURCE_ID);
   int httpCode = https.POST(payload);
+  String responseText = https.getString();
   https.end();
 
   if (httpCode >= 200 && httpCode < 300) {
+    Serial.printf("[HTTP %d] Firestore accepted packet successfully.\n", httpCode);
     return true;
   } else {
-    Serial.printf("[HTTP] Server responded with code: %d\n", httpCode);
+    Serial.printf("[HTTP ERROR %d] %s\n", httpCode, responseText.c_str());
     return false;
   }
 }
